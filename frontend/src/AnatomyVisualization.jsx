@@ -1,5 +1,4 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
 import './AnatomyVisualization.css';
 
 const AnatomyVisualization = ({ disease, affectedOrgan }) => {
@@ -42,20 +41,20 @@ const AnatomyVisualization = ({ disease, affectedOrgan }) => {
           100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
         @keyframes pulseRing {
-          0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.8); border-color: rgba(74, 222, 128, 1); }
-          70% { box-shadow: 0 0 0 20px rgba(74, 222, 128, 0); border-color: rgba(74, 222, 128, 0.5); }
-          100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); border-color: rgba(74, 222, 128, 1); }
+          0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.8); border-color: rgba(248, 113, 113, 1); }
+          70% { box-shadow: 0 0 0 20px rgba(248, 113, 113, 0); border-color: rgba(248, 113, 113, 0.5); }
+          100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); border-color: rgba(248, 113, 113, 1); }
         }
         .organ-highlight-circle.active {
           animation: organPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, 
                      pulseRing 2.5s infinite ease-in-out 0.8s !important;
-          border-color: #4ade80 !important;
-          background: rgba(74, 222, 128, 0.2) !important;
+          border-color: #f87171 !important;
+          background: rgba(248, 113, 113, 0.2) !important;
           opacity: 1 !important;
         }
       `}</style>
 
-      <h3 style={{ fontSize: '1.4rem', marginBottom: '1.2rem' }}><Zap size={20} fill="currentColor" /> Clinical Observation</h3>
+      <h3 style={{ fontSize: '1.4rem', marginBottom: '1.2rem' }}>Clinical Observation</h3>
       <div className="anatomy-container">
         <div className="image-wrapper">
           <img src="/body_3d.png" alt="Futuristic Anatomy" className="body-3d-image" />
