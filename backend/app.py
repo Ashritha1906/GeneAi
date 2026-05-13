@@ -77,24 +77,25 @@ def initialize_database():
 
 @app.route('/more-details', methods=['GET'])
 def more_details():
-    disease_name = request.args.get('disease')
+    disease_name = request.args.get('disease', '').strip()
     if not disease_name:
         return jsonify({"error": "Please provide a disease name"}), 400
 
+    search_term = disease_name.replace('_', ' ')
+    print(f"DEBUG: Fetching NCBI data for: {search_term}")
+
     def fetch_ncbi_data(db, term, retmax=5):
         try:
-            # Step 1: ESearch
             search_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db={db}&term={term}&retmode=json&retmax={retmax}"
-            search_res = requests.get(search_url).json()
+            search_res = requests.get(search_url, timeout=10).json()
             id_list = search_res.get('esearchresult', {}).get('idlist', [])
             
             if not id_list:
                 return []
 
-            # Step 2: ESummary
             ids = ",".join(id_list)
             summary_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db={db}&id={ids}&retmode=json"
-            summary_res = requests.get(summary_url).json()
+            summary_res = requests.get(summary_url, timeout=10).json()
             
             results = []
             uids = summary_res.get('result', {}).get('uids', [])
@@ -102,7 +103,7 @@ def more_details():
                 item = summary_res['result'][uid]
                 if db == 'gene':
                     results.append({
-                        "name": item.get('name'),
+                        "name": item.get('name', 'N/A'),
                         "description": item.get('description') or item.get('summary') or "Genomic sequence information"
                     })
                 elif db == 'clinvar':
@@ -112,19 +113,26 @@ def more_details():
                     })
                 elif db == 'medgen':
                     results.append({
-                        "name": item.get('title') or item.get('description'),
-                        "description": item.get('definition') or "Clinical condition profile"
+                        "name": item.get('title') or item.get('description') or 'Clinical Condition',
+                        "description": item.get('definition') or "Detailed clinical condition profile"
                     })
             return results
         except Exception as e:
             print(f"Error fetching from NCBI {db}: {e}")
             return []
 
-    data = {
-        "genes": fetch_ncbi_data('gene', disease_name),
-        "variants": fetch_ncbi_data('clinvar', disease_name),
-        "conditions": fetch_ncbi_data('medgen', disease_name)
-    }
+    # Use ThreadPoolExecutor for parallel fetching
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        future_genes = executor.submit(fetch_ncbi_data, 'gene', search_term)
+        future_variants = executor.submit(fetch_ncbi_data, 'clinvar', search_term)
+        future_conditions = executor.submit(fetch_ncbi_data, 'medgen', search_term)
+        
+        data = {
+            "genes": future_genes.result(),
+            "variants": future_variants.result(),
+            "conditions": future_conditions.result()
+        }
 
     return jsonify(data)
     

@@ -24,6 +24,7 @@ const DiseaseDetailsPage = () => {
       setError(null);
       try {
         const response = await axios.get(`http://localhost:5000/more-details?disease=${encodeURIComponent(diseaseName)}`);
+        console.log('DEBUG: NCBI data received:', response.data);
         setData(response.data);
       } catch (err) {
         console.error('Error fetching details:', err);
