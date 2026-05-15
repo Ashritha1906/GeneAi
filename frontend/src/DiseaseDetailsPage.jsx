@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { 
   ArrowLeft, 
@@ -8,40 +8,50 @@ import {
   Activity, 
   Loader2, 
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Table
 } from 'lucide-react';
 
 const DiseaseDetailsPage = () => {
   const { diseaseName } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const variationTerm = queryParams.get('variation');
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [variantIds, setVariantIds] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`http://localhost:5000/more-details?disease=${encodeURIComponent(diseaseName)}`);
-        console.log('DEBUG: NCBI data received:', response.data);
+        const url = `http://localhost:5000/more-details?disease=${encodeURIComponent(diseaseName)}&variation=${encodeURIComponent(variationTerm || '')}`;
+        const response = await axios.get(url);
         setData(response.data);
+        
+        if (response.data.variants) {
+          setVariantIds(response.data.variants.map(v => v.id || v.title));
+        }
       } catch (err) {
         console.error('Error fetching details:', err);
-        setError('Failed to fetch detailed genomic data from NCBI.');
+        setError('Failed to fetch specialized genomic data from ClinVar.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [diseaseName]);
+  }, [diseaseName, variationTerm]);
 
   if (loading) {
     return (
       <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <Loader2 className="spinner" size={48} style={{ color: 'var(--accent)', marginBottom: '1rem' }} />
-        <p style={{ fontWeight: '600', color: 'var(--text-muted)' }}>FETCHING REAL-TIME GENOMIC DATA...</p>
+        <p style={{ fontWeight: '600', color: 'var(--text-muted)' }}>FETCHING SPECIALIZED CLINVAR DATA...</p>
       </div>
     );
   }
@@ -84,35 +94,45 @@ const DiseaseDetailsPage = () => {
 
       <div className="details-header" style={{ marginBottom: '3rem' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{diseaseName}</h1>
-        <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Activity size={18} /> Detailed Clinical & Genomic Report
-        </p>
+        {variationTerm && (
+          <p className="variation-badge" style={{ 
+            display: 'inline-block', 
+            padding: '4px 12px', 
+            background: 'var(--accent-low)', 
+            color: 'var(--accent)', 
+            borderRadius: '20px', 
+            fontSize: '0.9rem',
+            fontWeight: '600'
+          }}>
+            Target Variation: {variationTerm}
+          </p>
+        )}
       </div>
 
       {!hasData ? (
         <div className="no-data" style={{ textAlign: 'center', padding: '4rem', background: 'var(--card-bg)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>No additional genomic data found in NCBI databases for this condition.</p>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>No specialized ClinVar data found for this specific variation.</p>
         </div>
       ) : (
-        <div className="details-grid" style={{ display: 'grid', gap: '2rem' }}>
+        <div className="details-grid" style={{ display: 'grid', gap: '3rem' }}>
           
-          {/* Genes Section */}
+          {/* Gene Table */}
           {data.genes.length > 0 && (
             <div className="info-section-box full-width">
-              <div className="section-box-title"><Dna size={20} /> Genomic Associations (NCBI Gene)</div>
+              <div className="section-box-title"><Dna size={20} /> Related Genes</div>
               <div className="table-responsive">
                 <table className="details-table">
                   <thead>
                     <tr>
                       <th>Gene Symbol</th>
-                      <th>Description / Summary</th>
+                      <th>OMIM ID</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.genes.map((gene, i) => (
                       <tr key={i}>
-                        <td style={{ fontWeight: '700', color: 'var(--accent)' }}>{gene.name}</td>
-                        <td>{gene.description}</td>
+                        <td style={{ fontWeight: '700', color: 'var(--accent)' }}>{gene.symbol}</td>
+                        <td style={{ fontFamily: 'monospace' }}>{gene.omim}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -129,24 +149,30 @@ const DiseaseDetailsPage = () => {
                 <table className="details-table">
                   <thead>
                     <tr>
-                      <th>Variant UID</th>
+                      <th>Variant ID</th>
+                      <th>Title</th>
+                      <th>Location</th>
                       <th>Clinical Significance</th>
+                      <th>Last Evaluated</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.variants.map((variant, i) => (
                       <tr key={i}>
-                        <td style={{ fontFamily: 'monospace' }}>{variant.id}</td>
+                        <td style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{variant.id}</td>
+                        <td style={{ fontSize: '0.9rem', maxWidth: '300px' }}>{variant.title}</td>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{variant.location}</td>
                         <td>
                           <span className="risk-pill" style={{ 
-                            background: variant.clinical_significance.toLowerCase().includes('pathogenic') ? 'rgba(255, 77, 77, 0.1)' : 'rgba(77, 255, 140, 0.1)',
-                            color: variant.clinical_significance.toLowerCase().includes('pathogenic') ? '#ff4d4d' : '#4dff8c',
+                            background: variant.significance.toLowerCase().includes('pathogenic') ? 'rgba(255, 77, 77, 0.1)' : 'rgba(77, 255, 140, 0.1)',
+                            color: variant.significance.toLowerCase().includes('pathogenic') ? '#ff4d4d' : '#4dff8c',
                             border: 'none',
                             fontSize: '0.8rem'
                           }}>
-                            {variant.clinical_significance}
+                            {variant.significance}
                           </span>
                         </td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{variant.last_evaluated}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -164,14 +190,14 @@ const DiseaseDetailsPage = () => {
                   <thead>
                     <tr>
                       <th>Condition Name</th>
-                      <th>Description</th>
+                      <th>Pathogenicity</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.conditions.map((cond, i) => (
                       <tr key={i}>
                         <td style={{ fontWeight: '600' }}>{cond.name}</td>
-                        <td style={{ fontSize: '0.9rem' }}>{cond.description}</td>
+                        <td style={{ fontSize: '0.9rem' }}>{cond.pathogenicity}</td>
                       </tr>
                     ))}
                   </tbody>

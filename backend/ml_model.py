@@ -220,7 +220,8 @@ class DiseasePredictor:
                         "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                         "prevalence_in_india": row.get('region', 'Data not available'),
                         "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
-                        "affected_organ": self.organ_map.get(disease_key, "General / Multiple")
+                        "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
+                        "variation": str(row.get('variation', ''))
                     }
                     results.append(match)
                     if len(results) >= 1:
@@ -271,7 +272,8 @@ class DiseasePredictor:
                     "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                     "prevalence_in_india": row.get('region', 'Data not available'),
                     "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
-                    "affected_organ": self.organ_map.get(disease_key, "General / Multiple")
+                    "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
+                    "variation": str(row.get('variation', ''))
                 }
                 results.append(match)
                 

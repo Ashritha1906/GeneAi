@@ -201,7 +201,7 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
 
       <div className="card-footer" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
         <button 
-          onClick={() => navigate(`/more-details/${encodeURIComponent(result.disease)}`)}
+          onClick={() => navigate(`/more-details/${encodeURIComponent(result.disease)}?variation=${encodeURIComponent(result.variation || '')}`)}
           className="search-btn"
           style={{ 
             display: 'flex', 

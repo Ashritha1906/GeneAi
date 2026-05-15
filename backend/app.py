@@ -4,6 +4,11 @@ from ml_model import DiseasePredictor
 from database import DatabaseManager
 import os
 import requests
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+NCBI_API_KEY = os.getenv('NCBI_API_KEY')
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)  # Enable CORS for frontend connection
@@ -78,62 +83,84 @@ def initialize_database():
 @app.route('/more-details', methods=['GET'])
 def more_details():
     disease_name = request.args.get('disease', '').strip()
-    if not disease_name:
-        return jsonify({"error": "Please provide a disease name"}), 400
+    variation_term = request.args.get('variation', '').strip()
+    
+    # Prioritize variation string (e.g. HBB:c.51del) as the search term
+    search_term = variation_term if variation_term else disease_name.replace('_', ' ')
+    
+    if not search_term:
+        return jsonify({"error": "Please provide a disease or variation name"}), 400
 
-    search_term = disease_name.replace('_', ' ')
-    print(f"DEBUG: Fetching NCBI data for: {search_term}")
+    print(f"DEBUG: Fetching Specialized NCBI data for: {search_term}")
 
-    def fetch_ncbi_data(db, term, retmax=5):
+    def fetch_clinvar_tables(term, retmax=10):
         try:
-            search_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db={db}&term={term}&retmode=json&retmax={retmax}"
-            search_res = requests.get(search_url, timeout=10).json()
+            # Step 1: ESearch
+            params = {"db": "clinvar", "term": term, "retmode": "json", "retmax": retmax}
+            if NCBI_API_KEY: params["api_key"] = NCBI_API_KEY
+            
+            search_res = requests.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi", params=params, timeout=10).json()
             id_list = search_res.get('esearchresult', {}).get('idlist', [])
             
             if not id_list:
-                return []
+                return {"genes": [], "variants": [], "conditions": []}
 
-            ids = ",".join(id_list)
-            summary_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db={db}&id={ids}&retmode=json"
-            summary_res = requests.get(summary_url, timeout=10).json()
+            # Step 2: ESummary
+            summary_params = {"db": "clinvar", "id": ",".join(id_list), "retmode": "json"}
+            if NCBI_API_KEY: summary_params["api_key"] = NCBI_API_KEY
             
-            results = []
-            uids = summary_res.get('result', {}).get('uids', [])
+            summary_res = requests.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi", params=summary_params, timeout=10).json()
+            result_data = summary_res.get('result', {})
+            uids = result_data.get('uids', [])
+            
+            genes_table = []
+            variants_table = []
+            conditions_table = []
+            
+            seen_genes = set()
+            seen_conditions = set()
+
             for uid in uids:
-                item = summary_res['result'][uid]
-                if db == 'gene':
-                    results.append({
-                        "name": item.get('name', 'N/A'),
-                        "description": item.get('description') or item.get('summary') or "Genomic sequence information"
-                    })
-                elif db == 'clinvar':
-                    results.append({
-                        "id": uid,
-                        "clinical_significance": item.get('clinical_significance', {}).get('description') or "Reviewed clinical variant"
-                    })
-                elif db == 'medgen':
-                    results.append({
-                        "name": item.get('title') or item.get('description') or 'Clinical Condition',
-                        "description": item.get('definition') or "Detailed clinical condition profile"
-                    })
-            return results
+                item = result_data.get(uid, {})
+                
+                # Extract Genes
+                for g in item.get('genes', []):
+                    symbol = g.get('symbol')
+                    if symbol and symbol not in seen_genes:
+                        seen_genes.add(symbol)
+                        genes_table.append({
+                            "symbol": symbol,
+                            "omim": g.get('omim_id', 'N/A')
+                        })
+
+                # Extract Variation Info
+                variants_table.append({
+                    "title": item.get('title', 'N/A'),
+                    "location": item.get('variation_loc', 'N/A'),
+                    "significance": item.get('clinical_significance', {}).get('description', 'N/A')
+                })
+
+                # Extract Conditions
+                germline = item.get('germline_classification', {})
+                for trait in item.get('trait_refs', []):
+                    trait_name = trait.get('trait_name')
+                    if trait_name and trait_name not in seen_conditions:
+                        seen_conditions.add(trait_name)
+                        conditions_table.append({
+                            "name": trait_name,
+                            "pathogenicity": germline.get('description', 'N/A')
+                        })
+
+            return {
+                "genes": genes_table[:10],
+                "variants": variants_table[:10],
+                "conditions": conditions_table[:10]
+            }
         except Exception as e:
-            print(f"Error fetching from NCBI {db}: {e}")
-            return []
+            print(f"DEBUG: Specialized Fetch Error: {e}")
+            return {"genes": [], "variants": [], "conditions": []}
 
-    # Use ThreadPoolExecutor for parallel fetching
-    from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        future_genes = executor.submit(fetch_ncbi_data, 'gene', search_term)
-        future_variants = executor.submit(fetch_ncbi_data, 'clinvar', search_term)
-        future_conditions = executor.submit(fetch_ncbi_data, 'medgen', search_term)
-        
-        data = {
-            "genes": future_genes.result(),
-            "variants": future_variants.result(),
-            "conditions": future_conditions.result()
-        }
-
+    data = fetch_clinvar_tables(search_term)
     return jsonify(data)
     
 if __name__ == '__main__':
