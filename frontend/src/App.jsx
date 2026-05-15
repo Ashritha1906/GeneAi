@@ -17,10 +17,15 @@ import {
   FileText,
   Thermometer,
   Layers,
-  Loader2
+  Loader2,
+  Download,
+  Mic,
+  MicOff
 } from 'lucide-react'
+import { jsPDF } from 'jspdf'
 import AnatomyVisualization from './AnatomyVisualization'
 import DiseaseDetailsPage from './DiseaseDetailsPage'
+import PrevalenceMap from './PrevalenceMap'
 import './App.css'
 
 function App() {
@@ -79,6 +84,7 @@ function App() {
             />
           } />
           <Route path="/more-details/:diseaseName" element={<DiseaseDetailsPage />} />
+          <Route path="/prevalence-map/:diseaseName" element={<PrevalenceMap />} />
         </Routes>
       </main>
 
@@ -107,8 +113,83 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
   
   let riskColor = 'risk-low';
   let riskLabel = 'Low Risk';
-  if (result.confidence_score > 80) { riskColor = 'risk-high'; riskLabel = 'High Risk'; }
-  else if (result.confidence_score > 50) { riskColor = 'risk-medium'; riskLabel = 'Medium Risk'; }
+  if (result.confidence_score > 70) { riskColor = 'risk-high'; riskLabel = 'High Risk'; }
+  else if (result.confidence_score >= 40) { riskColor = 'risk-medium'; riskLabel = 'Medium Risk'; }
+
+  const handleDownloadPDF = (result) => {
+    const doc = new jsPDF();
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("Clinical Genomic Report", 20, 20);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+    
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Disease / Condition:", 20, 45);
+    doc.setFont("helvetica", "normal");
+    doc.text(result.disease || "N/A", 20, 55);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Confidence Score:", 20, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${result.confidence_score}%`, 20, 80);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Affected Organ:", 20, 95);
+    doc.setFont("helvetica", "normal");
+    doc.text(result.affected_organ || "N/A", 20, 105);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Description:", 20, 120);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    const splitDesc = doc.splitTextToSize(result.description || "N/A", 170);
+    doc.text(splitDesc, 20, 130);
+    
+    let currentY = 130 + (splitDesc.length * 6) + 10;
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Causes:", 20, currentY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    const splitCauses = doc.splitTextToSize(result.causes || "N/A", 170);
+    currentY += 10;
+    doc.text(splitCauses, 20, currentY);
+
+    currentY += (splitCauses.length * 6) + 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Prevention:", 20, currentY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    const splitPrev = doc.splitTextToSize(result.prevention || "N/A", 170);
+    currentY += 10;
+    doc.text(splitPrev, 20, currentY);
+
+    currentY += (splitPrev.length * 6) + 10;
+    
+    if (currentY > 250) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Recovery / Treatment:", 20, currentY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    const splitRec = doc.splitTextToSize(result.recovery_treatment || "N/A", 170);
+    currentY += 10;
+    doc.text(splitRec, 20, currentY);
+
+    doc.save(`${(result.disease || "clinical_report").replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf`);
+  };
 
   return (
     <div key={index} className={`disease-main-card ${isTop ? 'top-result' : ''}`}>
@@ -144,7 +225,34 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
 
         <div className="info-section-box">
           <div className="section-box-title"><MapPin size={18} /> Prevalence in India</div>
-          <p style={{ fontWeight: '600' }}>{result.prevalence_in_india || 'Nationwide / General Prevalence'}</p>
+          <p style={{ fontWeight: '600', marginBottom: '10px' }}>{result.prevalence_in_india || 'Nationwide / General Prevalence'}</p>
+          {result.common_states && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}><strong>Common States:</strong> {result.common_states}</p>
+              <a 
+                href={`/prevalence-map/${encodeURIComponent(result.disease)}?states=${encodeURIComponent(result.common_states)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="search-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  background: 'var(--accent)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  padding: '5px 10px',
+                  fontSize: '0.85rem',
+                  borderRadius: '4px',
+                  alignSelf: 'flex-start',
+                  boxShadow: 'none'
+                }}
+              >
+                <MapPin size={16} /> Show in Map
+              </a>
+            </div>
+          )}
         </div>        <div className="info-section-box full-width">
           <div className="section-box-title"><FlaskConical size={18} /> Mutation Details</div>
           <div className="mutation-table-container">
@@ -199,7 +307,22 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
         </div>
       </div>
 
-      <div className="card-footer" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="card-footer" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+        <button 
+          onClick={() => handleDownloadPDF(result)}
+          className="search-btn"
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px',
+            background: 'var(--secondary)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            boxShadow: 'none'
+          }}
+        >
+          <Download size={20} /> Download PDF
+        </button>
         <button 
           onClick={() => navigate(`/more-details/${encodeURIComponent(result.disease)}?variation=${encodeURIComponent(result.variation || '')}`)}
           className="search-btn"
@@ -222,6 +345,7 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
 
 const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, navigate }) => {
   const inputRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
 
   // Maintain focus even after re-renders
   useEffect(() => {
@@ -229,6 +353,40 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, nav
       inputRef.current.focus();
     }
   }, [results]); // Re-focus when results change
+
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support speech recognition. Please try Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      // Append to existing text or set as new
+      setQuery(query ? `${query} ${transcript}` : transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   return (
     <>
@@ -250,6 +408,25 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, nav
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
+            <button 
+              type="button" 
+              onClick={startListening} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                padding: '0 10px',
+                marginRight: '10px',
+                color: isListening ? '#ef4444' : 'var(--text-muted)',
+                animation: isListening ? 'pulse 1.5s infinite' : 'none'
+              }}
+              title="Speak Symptoms"
+            >
+              {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+            </button>
             <button type="submit" className="search-btn" disabled={loading} style={{ fontSize: '1.1rem' }}>
               {loading ? 'Analyzing...' : 'Analyze'}
             </button>

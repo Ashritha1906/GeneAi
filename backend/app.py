@@ -4,6 +4,7 @@ from ml_model import DiseasePredictor
 from database import DatabaseManager
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -23,6 +24,17 @@ if os.path.exists(DATA_FILE):
 else:
     print(f"Warning: Dataset not found at {DATA_FILE}.")
 
+# Load Local NCBI Dataset (JSON)
+NCBI_DATA_PATH = os.path.join(os.path.dirname(__file__), "ncbi_data.json")
+NCBI_DATASET = {}
+
+if os.path.exists(NCBI_DATA_PATH):
+    print(f"Loading local NCBI dataset from {NCBI_DATA_PATH}...")
+    with open(NCBI_DATA_PATH, 'r') as f:
+        NCBI_DATASET = json.load(f)
+else:
+    print(f"Warning: Local NCBI dataset not found at {NCBI_DATA_PATH}. Run generate_json.py first.")
+
 @app.route('/', methods=['GET'])
 def health_check():
     return jsonify({
@@ -30,10 +42,6 @@ def health_check():
         "message": "Bioinformatics Disease Prediction API is running",
         "model_loaded": predictor.df is not None
     })
-
-@app.route('/ui', methods=['GET'])
-def ui():
-    return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict_disease():
@@ -53,43 +61,28 @@ def disease_details():
     details = predictor.get_disease_details(disease_name)
     return jsonify(details)
 
-@app.route('/gene-search', methods=['GET'])
-def gene_search():
-    gene_name = request.args.get('gene')
-    if not gene_name:
-        return jsonify({"error": "Please provide a 'gene' name"}), 400
-    info = predictor.search_genes(gene_name)
-    return jsonify(info)
-
-@app.route('/admin/init-db', methods=['POST'])
-def initialize_database():
-    data = request.json or {}
-    host = data.get('host', 'localhost')
-    user = data.get('user', 'root')
-    password = data.get('password', '')
-    if not os.path.exists(DATA_FILE):
-        return jsonify({"error": "Dataset not found."}), 404
-    db = DatabaseManager(host=host, user=user, password=password)
-    if not db.connect():
-        return jsonify({"error": "Failed to connect to MySQL."}), 500
-    db.create_tables()
-    success = db.import_csv_to_db(DATA_FILE)
-    db.close()
-    if success:
-        return jsonify({"message": "Database initialized!"})
-    return jsonify({"error": "Failed to import data."}), 500
-
-
 @app.route('/more-details', methods=['GET'])
 def more_details():
     disease_name = request.args.get('disease', '').strip()
     variation_term = request.args.get('variation', '').strip()
     
-    # Prioritize variation string (e.g. HBB:c.51del) as the search term
-    search_term = variation_term if variation_term else disease_name.replace('_', ' ')
+    if not disease_name and not variation_term:
+        return jsonify({"error": "Disease or variation name is required"}), 400
+
+    clean_name = disease_name.replace('_', ' ').strip()
+    search_term = variation_term if variation_term else clean_name
+
+    # Try direct lookup from local dataset first
+    data = NCBI_DATASET.get(clean_name)
+    if not data:
+        for key in NCBI_DATASET:
+            if key.lower() == clean_name.lower():
+                data = NCBI_DATASET[key]
+                break
     
-    if not search_term:
-        return jsonify({"error": "Please provide a disease or variation name"}), 400
+    # If we found data locally and aren't searching for a specific variation, return local data
+    if data and not variation_term:
+        return jsonify(data)
 
     print(f"DEBUG: Fetching Specialized NCBI data for: {search_term}")
 
@@ -129,14 +122,19 @@ def more_details():
                     if symbol and symbol not in seen_genes:
                         seen_genes.add(symbol)
                         genes_table.append({
+                            "gene": symbol, # Map symbol to gene for frontend compatibility
                             "symbol": symbol,
                             "omim": g.get('omim_id', 'N/A')
                         })
 
                 # Extract Variation Info
                 variants_table.append({
+                    "variation": item.get('title', 'N/A'), # Map title to variation
                     "title": item.get('title', 'N/A'),
                     "location": item.get('variation_loc', 'N/A'),
+                    "protein_change": 'N/A',
+                    "consequence": 'N/A',
+                    "review_status": item.get('clinical_significance', {}).get('description', 'N/A'),
                     "significance": item.get('clinical_significance', {}).get('description', 'N/A')
                 })
 
@@ -147,8 +145,12 @@ def more_details():
                     if trait_name and trait_name not in seen_conditions:
                         seen_conditions.add(trait_name)
                         conditions_table.append({
+                            "condition": trait_name, # Map name to condition
                             "name": trait_name,
-                            "pathogenicity": germline.get('description', 'N/A')
+                            "classification": germline.get('description', 'N/A'),
+                            "pathogenicity": germline.get('description', 'N/A'),
+                            "review_status": 'N/A',
+                            "last_evaluated": 'N/A'
                         })
 
             return {
@@ -159,9 +161,8 @@ def more_details():
         except Exception as e:
             print(f"DEBUG: Specialized Fetch Error: {e}")
             return {"genes": [], "variants": [], "conditions": []}
-
     data = fetch_clinvar_tables(search_term)
     return jsonify(data)
-    
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

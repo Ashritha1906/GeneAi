@@ -126,6 +126,28 @@ class DiseasePredictor:
             "hereditary_anemia": "Blood"
         }
 
+        # State Mapping for India
+        self.state_map = {
+            "thalassemia": "Gujarat, Maharashtra, West Bengal",
+            "sickle cell disease": "Chhattisgarh, Madhya Pradesh, Maharashtra",
+            "sickle_cell": "Chhattisgarh, Madhya Pradesh, Maharashtra",
+            "glucose-6-phosphate dehydrogenase deficiency": "Punjab, Haryana",
+            "g6pd": "Punjab, Haryana",
+            "breast cancer": "Delhi, Kerala, Punjab",
+            "breast_cancer": "Delhi, Kerala, Punjab",
+            "parkinson's disease": "Kerala, Tamil Nadu, Karnataka",
+            "parkinsons": "Kerala, Tamil Nadu, Karnataka",
+            "hemophilia": "Maharashtra, Uttar Pradesh",
+            "familial hypercholesterolemia": "Urban regions nationwide",
+            "fh": "Urban regions nationwide",
+            "cystic fibrosis": "North India (Delhi, Punjab)",
+            "cystic_fibrosis": "North India (Delhi, Punjab)",
+            "hypertrophic cardiomyopathy": "Nationwide",
+            "hcm": "Nationwide",
+            "hereditary anemia": "Nationwide",
+            "hereditary_anemia": "Nationwide"
+        }
+
     # Feature 3: Input Enhancement
     def enhance_input(self, text):
         synonyms = {
@@ -219,6 +241,7 @@ class DiseasePredictor:
                         "related_genes": row.get('gene_name', 'N/A'),
                         "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                         "prevalence_in_india": row.get('region', 'Data not available'),
+                        "common_states": self.state_map.get(disease_key, "General / Multiple"),
                         "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                         "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
                         "variation": str(row.get('variation', ''))
@@ -271,6 +294,7 @@ class DiseasePredictor:
                     "related_genes": row.get('gene_name', 'N/A'),
                     "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                     "prevalence_in_india": row.get('region', 'Data not available'),
+                    "common_states": self.state_map.get(disease_key, "General / Multiple"),
                     "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                     "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
                     "variation": str(row.get('variation', ''))

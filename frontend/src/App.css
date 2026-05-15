@@ -314,6 +314,24 @@ main {
   font-size: 0.85rem;
 }
 
+.risk-high {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444; /* red */
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.risk-medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b; /* orange */
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.risk-low {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981; /* green */
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
 .visualization-sidebar {
   flex: 3;
   min-width: 300px;
@@ -364,10 +382,15 @@ main {
 }
 
 .details-table td {
-  padding: 16px;
+  padding: 18px 16px;
   border-bottom: 1px solid var(--border);
   line-height: 1.6;
   vertical-align: top;
+  color: var(--text);
+}
+
+.details-table tr:hover {
+  background-color: rgba(14, 165, 233, 0.02);
 }
 
 .details-table tr:last-child td {
@@ -390,6 +413,80 @@ main {
 .details-header h1 {
   background: var(--medical-gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 900;
+}
+
+.publication-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--accent) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.publication-card a:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+/* NCBI Style Tables */
+.details-table.ncbi-style {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid #ddd;
+}
+
+.details-table.ncbi-style th {
+  background-color: #f1f1f1;
+  color: #333;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  font-size: 0.85rem;
+  text-transform: none;
+}
+
+.details-table.ncbi-style td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+  color: #444;
+  vertical-align: middle;
+}
+
+.details-table.ncbi-style tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.details-table.ncbi-style tr:hover {
+  background-color: #f0f7ff;
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
