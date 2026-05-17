@@ -25,7 +25,7 @@ import {
 import { jsPDF } from 'jspdf'
 import AnatomyVisualization from './AnatomyVisualization'
 import DiseaseDetailsPage from './DiseaseDetailsPage'
-import PrevalenceMap from './PrevalenceMap'
+import AIAssistant from './AIAssistant'
 import './App.css'
 
 const DiseaseComparison = ({ results }) => {
@@ -136,6 +136,8 @@ function App() {
       <footer style={{ padding: '4rem 2rem', borderTop: '1px solid var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
         &copy; 2026 Genomic AI Bioinformatics System. All data is for clinical reference and educational use.
       </footer>
+
+      <AIAssistant currentDisease={results ? (Array.isArray(results) ? results[0] : results) : null} />
     </div>
   )
 }

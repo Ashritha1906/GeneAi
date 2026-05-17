@@ -5,14 +5,32 @@ from database import DatabaseManager
 import os
 import requests
 import json
+from groq import Groq
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-NCBI_API_KEY = os.getenv('NCBI_API_KEY')
+print(f"DEBUG: GROQ_API_KEY present: {'Yes' if GROQ_API_KEY else 'No'}")
+
+# Initialize Groq Client
+client = None
+if GROQ_API_KEY:
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        print("DEBUG: Groq client initialized.")
+    except Exception as e:
+        print(f"ERROR: Groq initialization failed: {e}")
+
+if not GROQ_API_KEY:
+    print("CRITICAL: No Groq API Key found in .env file. AI Assistant will be unavailable.")
+
+SYSTEM_PROMPT = (
+    "You are a medical assistant for a bioinformatics project. "
+    "Give clear, short, and accurate explanations about diseases. "
+    "Avoid complex jargon. Answer in 2–4 lines maximum."
+)
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-CORS(app)  # Enable CORS for frontend connection
 
 # Initialize ML Model
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "final_genomic_dataset.csv")
@@ -163,6 +181,39 @@ def more_details():
             return {"genes": [], "variants": [], "conditions": []}
     data = fetch_clinvar_tables(search_term)
     return jsonify(data)
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    if not data or 'message' not in data:
+        return jsonify({"error": "Message is required"}), 400
+
+    user_message = data['message']
+    disease_context = data.get('context', 'General medical query')
+    
+    print(f"DEBUG: Chat request received: '{user_message[:50]}...'")
+    
+    if client:
+        try:
+            print("DEBUG: Attempting Groq API (llama3-8b-8192)...")
+            response = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Context: {disease_context}\n\nQuestion: {user_message}"}
+                ]
+            )
+            ai_response = response.choices[0].message.content
+            print(f"DEBUG: Groq Success. Response length: {len(ai_response)}")
+            return jsonify({"response": ai_response})
+        except Exception as e:
+            print(f"ERROR: Groq API call failed: {str(e)}")
+            return jsonify({"response": "AI service temporarily unavailable"}), 503
+
+    return jsonify({
+        "response": "AI Assistant is currently unavailable. Please check the backend logs for details.",
+        "error": "Groq client not initialized"
+    }), 503
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
