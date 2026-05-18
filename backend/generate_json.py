@@ -30,6 +30,22 @@ def generate_ncbi_data():
         "G6PD": "305900"
     }
     
+    # Disease to Prevalence Region (India) mapping
+    disease_region_map = {
+        "Thalassemia": "Gujarat, Punjab, West Bengal",
+        "Sickle Cell Disease": "Madhya Pradesh, Chhattisgarh",
+        "Sickle Cell Anemia": "Madhya Pradesh, Chhattisgarh",
+        "Phenylketonuria": "South India (Tamil Nadu, Kerala)",
+        "Fanconi Anemia": "Rare, scattered cases",
+        "Breast Cancer": "Urban India (High prevalence)",
+        "Glucose-6-Phosphate Dehydrogenase Deficiency": "South India, North-West India",
+        "Hemophilia": "Across India (Pan-Indian distribution)",
+        "Hypertrophic Cardiomyopathy": "South India (High frequency)",
+        "Cystic Fibrosis": "North India (Underreported)",
+        "Parkinson's Disease": "Urban areas (Age-related distribution)",
+        "Hereditary Anemia": "North & East India"
+    }
+    
     ncbi_data = {}
     grouped = df.groupby('disease')
     
@@ -37,15 +53,19 @@ def generate_ncbi_data():
         disease_key = disease_name.strip()
         subset = group.head(100)
         
+        # Get region from map or fallback
+        region_display = disease_region_map.get(disease_key, "Data not available")
+        
         # Genes Section
-        unique_genes = subset['gene_name'].unique()
         genes_list = []
-        for gene in unique_genes:
-            gene_clean = str(gene).strip().split(';')[0].split(',')[0] # Handle multiple genes
+        for gene_name, gene_group in subset.groupby('gene_name'):
+            gene_clean = str(gene_name).strip().split(';')[0].split(',')[0] # Handle multiple genes
             omim = omim_map.get(gene_clean, str(600000 + hash(gene_clean) % 100000))
+            
             genes_list.append({
-                "gene": gene,
-                "omim": omim
+                "gene": gene_name,
+                "omim": omim,
+                "region": region_display
             })
             
         # Variants Section

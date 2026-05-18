@@ -126,6 +126,7 @@ class DiseasePredictor:
             "hereditary_anemia": "Blood"
         }
 
+<<<<<<< HEAD
         # State Mapping for India
         self.state_map = {
             "thalassemia": "Gujarat, Maharashtra, West Bengal",
@@ -146,6 +147,97 @@ class DiseasePredictor:
             "hcm": "Nationwide",
             "hereditary anemia": "Nationwide",
             "hereditary_anemia": "Nationwide"
+=======
+        # Doctor Recommendation Mapping
+        self.doctor_map = {
+            "thalassemia": "Hematologist",
+            "sickle cell disease": "Hematologist",
+            "sickle cell anemia": "Hematologist",
+            "sickle_cell": "Hematologist",
+            "glucose-6-phosphate dehydrogenase deficiency": "Hematologist",
+            "g6pd": "Hematologist",
+            "breast cancer": "Oncologist",
+            "breast_cancer": "Oncologist",
+            "parkinson's disease": "Neurologist",
+            "parkinsons": "Neurologist",
+            "hemophilia": "Hematologist",
+            "familial hypercholesterolemia": "Cardiologist",
+            "fh": "Cardiologist",
+            "cystic fibrosis": "Pulmonologist",
+            "cystic_fibrosis": "Pulmonologist",
+            "hypertrophic cardiomyopathy": "Cardiologist",
+            "hcm": "Cardiologist",
+            "hereditary anemia": "Hematologist",
+            "hereditary_anemia": "Hematologist"
+        }
+
+        # Disease Progression Mapping
+        self.progression_map = {
+            "thalassemia": {
+                "early": "Mild anemia, fatigue, weakness",
+                "moderate": "Pale skin, bone deformities, delayed growth",
+                "severe": "Severe anemia, organ damage, regular transfusions required"
+            },
+            "sickle cell disease": {
+                "early": "Fatigue, periodic episodes of pain (crises)",
+                "moderate": "Frequent infections, swelling in hands and feet",
+                "severe": "Vision problems, acute chest syndrome, stroke risk"
+            },
+            "glucose-6-phosphate dehydrogenase deficiency": {
+                "early": "Asymptomatic until triggered by oxidative stress",
+                "moderate": "Jaundice, dark urine, rapid heart rate",
+                "severe": "Acute hemolytic crisis, kidney failure risk"
+            },
+            "breast cancer": {
+                "early": "Small lump, no symptoms, localized to breast",
+                "moderate": "Lump growth, lymph node involvement, skin changes",
+                "severe": "Metastasis to other organs (bones, liver, lungs)"
+            },
+            "parkinson's disease": {
+                "early": "Mild tremors, slight change in walking or posture",
+                "moderate": "Bradykinesia (slow movement), increased rigidity, balance issues",
+                "severe": "Severe motor impairment, requires assistance for daily activities"
+            },
+            "hemophilia": {
+                "early": "Easy bruising, prolonged bleeding from minor cuts",
+                "moderate": "Frequent nosebleeds, bleeding into joints without clear cause",
+                "severe": "Spontaneous internal bleeding, permanent joint damage"
+            },
+            "familial hypercholesterolemia": {
+                "early": "High LDL levels, often asymptomatic in childhood",
+                "moderate": "Xanthomas (fatty deposits) on tendons or around eyes",
+                "severe": "Early-onset coronary artery disease, heart attack risk"
+            },
+            "cystic fibrosis": {
+                "early": "Salty-tasting skin, persistent cough, poor weight gain",
+                "moderate": "Frequent lung infections, greasy stools, breathing difficulty",
+                "severe": "Respiratory failure, liver disease, malnutrition"
+            },
+            "hypertrophic cardiomyopathy": {
+                "early": "Mild shortness of breath, often asymptomatic",
+                "moderate": "Chest pain, fainting episodes (syncope), palpitations",
+                "severe": "Heart failure, severe arrhythmias, risk of sudden cardiac arrest"
+            },
+            "hereditary anemia": {
+                "early": "Lethargy, mild shortness of breath during exertion",
+                "moderate": "Persistent weakness, cold hands/feet, jaundice",
+                "severe": "Organ enlargement (spleen/liver), chronic heart strain"
+            }
+        }
+
+        # Symptom Mapping (exposed as self so app.py can access it)
+        self.symptom_mapping = {
+            "thalassemia": "fatigue pale skin weakness anemia tired exhaustion dizzy breathless bone deformities dark urine",
+            "sickle cell disease": "pain infections fatigue swelling anemia tired crisis vision problems delayed growth frequent infections",
+            "glucose-6-phosphate dehydrogenase deficiency": "jaundice fatigue pale skin dark urine tired yellowing eyes rapid heart rate shortness of breath trigger",
+            "breast cancer": "lump pain breast tissue swelling redness skin changes discharge nipple inversion",
+            "parkinson's disease": "tremor stiffness slow movement balance shaking rigid muscles posture changes speech writing changes",
+            "hemophilia": "bleeding joint pain bruising blood nosebleeds prolonged bleeding tight joints swelling",
+            "familial hypercholesterolemia": "chest pain cholesterol xanthomas heart attack fatty deposits family history high lipids angina",
+            "cystic fibrosis": "cough lung infection shortness of breath wheezing salty skin poor growth greasy stools mucus",
+            "hypertrophic cardiomyopathy": "shortness of breath chest pain fainting heart murmur palpitations rapid heartbeat dizziness syncope",
+            "hereditary anemia": "fatigue weakness pale skin tired lethargy shortness of breath irregular heartbeats cold hands feet"
+>>>>>>> b3d9ddf (Added my feature updates)
         }
 
     # Feature 3: Input Enhancement
@@ -181,24 +273,11 @@ class DiseasePredictor:
                                      self.df['variation'].astype(str) + " " + \
                                      self.df['disease'].astype(str)
             
-            symptom_mapping = {
-                "thalassemia": "fatigue pale skin weakness anemia tired exhaustion dizzy dizzy breathless bone deformities dark urine",
-                "sickle cell disease": "pain infections fatigue swelling anemia tired crisis vision problems delayed growth frequent infections",
-                "glucose-6-phosphate dehydrogenase deficiency": "jaundice fatigue pale skin dark urine tired yellowing eyes rapid heart rate shortness of breath trigger",
-                "breast cancer": "lump pain breast tissue swelling redness skin changes discharge nipple inversion",
-                "parkinson's disease": "tremor stiffness slow movement balance shaking rigid muscles posture changes speech writing changes",
-                "hemophilia": "bleeding joint pain bruising blood nosebleeds prolonged bleeding tight joints swelling",
-                "familial hypercholesterolemia": "chest pain cholesterol xanthomas heart attack fatty deposits family history high lipids angina",
-                "cystic fibrosis": "cough lung infection shortness of breath wheezing salty skin poor growth greasy stools mucus",
-                "hypertrophic cardiomyopathy": "shortness of breath chest pain fainting heart murmur palpitations rapid heartbeat dizziness syncope",
-                "hereditary anemia": "fatigue weakness pale skin tired lethargy shortness of breath irregular heartbeats cold hands feet"
-            }
-            
             def add_symptoms(disease_name):
                 if pd.isna(disease_name):
                     return ""
                 disease_key = str(disease_name).lower().strip()
-                return symptom_mapping.get(disease_key, "")
+                return self.symptom_mapping.get(disease_key, "")
                 
             self.df['symptoms'] = self.df['disease'].apply(add_symptoms)
             self.df['search_text'] = self.df['search_text'] + " " + self.df['symptoms']
@@ -238,13 +317,18 @@ class DiseasePredictor:
                         "description": disease_details.get("description", "Description not available."),
                         "causes": disease_details.get("causes", "Information not available"),
                         "prevention": disease_details.get("prevention", "Information not available"),
-                        "related_genes": row.get('gene_name', 'N/A'),
+                        "related_genes": str(row.get('gene_name', '')).replace(';', ','),
                         "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                         "prevalence_in_india": row.get('region', 'Data not available'),
                         "common_states": self.state_map.get(disease_key, "General / Multiple"),
                         "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                         "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
+<<<<<<< HEAD
                         "variation": str(row.get('variation', ''))
+=======
+                        "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),
+                        "progression": self.progression_map.get(disease_key, None)
+>>>>>>> b3d9ddf (Added my feature updates)
                     }
                     results.append(match)
                     if len(results) >= 1:
@@ -291,13 +375,18 @@ class DiseasePredictor:
                     "description": disease_details.get("description", "Description not available."),
                     "causes": disease_details.get("causes", "Information not available"),
                     "prevention": disease_details.get("prevention", "Information not available"),
-                    "related_genes": row.get('gene_name', 'N/A'),
+                    "related_genes": str(row.get('gene_name', '')).replace(';', ','),
                     "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                     "prevalence_in_india": row.get('region', 'Data not available'),
                     "common_states": self.state_map.get(disease_key, "General / Multiple"),
                     "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                     "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
+<<<<<<< HEAD
                     "variation": str(row.get('variation', ''))
+=======
+                    "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),
+                    "progression": self.progression_map.get(disease_key, None)
+>>>>>>> b3d9ddf (Added my feature updates)
                 }
                 results.append(match)
                 
@@ -315,13 +404,31 @@ class DiseasePredictor:
         return results
 
     def get_disease_details(self, disease_name):
-        details = self.disease_info.get(disease_name.title())
+        # Try different casings for lookup
+        details = self.disease_info.get(disease_name.lower())
+        if not details:
+            details = self.disease_info.get(disease_name.title())
+            
         if details:
+            # Create a copy to avoid mutating the original dictionary
+            result = details.copy()
             if self.df is not None:
-                genes = self.df[self.df['disease'].str.lower() == disease_name.lower()]['gene_name'].unique()[:5].tolist()
-                details['associated_genes'] = genes
-            return details
-        return {"error": "Disease not found"}
+                # Get all unique gene strings for this disease
+                raw_genes = self.df[self.df['disease'].str.lower() == disease_name.lower()]['gene_name'].unique().tolist()
+                
+                # Split and clean individual genes
+                all_genes = set()
+                for g_str in raw_genes:
+                    if not g_str: continue
+                    # Split by common delimiters and add each part
+                    parts = [p.strip() for p in str(g_str).replace(';', ',').split(',')]
+                    for p in parts:
+                        if p and p.upper() != 'N/A':
+                            all_genes.add(p)
+                
+                result['associated_genes'] = sorted(list(all_genes))[:10] # Return up to 10 unique genes
+            return result
+        return {"error": f"Disease '{disease_name}' not found in local records"}
         
     def search_genes(self, gene_name):
         if self.df is None:
@@ -337,3 +444,44 @@ class DiseasePredictor:
                 "common_variations": variations
             }
         return {"error": "Gene not found"}
+
+    def get_all_diseases(self):
+        if self.df is not None:
+            diseases = self.df['disease'].dropna().unique().tolist()
+            return sorted(list(set([str(d).strip() for d in diseases if str(d).strip()])))
+        return []
+
+    def get_disease_by_name(self, disease_name):
+        if self.df is None:
+            return None
+            
+        clean_name = disease_name.strip().lower()
+        matches = self.df[self.df['disease'].astype(str).str.lower() == clean_name]
+        
+        if not matches.empty:
+            row = matches.iloc[0]
+            # Replace underscores for disease_key matching just in case
+            disease_key = clean_name.replace('_', ' ')
+            if disease_key not in self.disease_info:
+                 disease_key = clean_name # try original
+                 
+            disease_details = self.disease_info.get(disease_key, {})
+            if not disease_details and clean_name in self.disease_info:
+                 disease_details = self.disease_info[clean_name]
+                 
+            match = {
+                "disease": row.get('disease', disease_name),
+                "confidence_score": 100.0,
+                "description": disease_details.get("description", "Description not available."),
+                "causes": disease_details.get("causes", "Information not available"),
+                "prevention": disease_details.get("prevention", "Information not available"),
+                "related_genes": str(row.get('gene_name', '')).replace(';', ','),
+                "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
+                "prevalence_in_india": row.get('region', 'Data not available'),
+                "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
+                "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
+                "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),
+                "progression": self.progression_map.get(disease_key, None)
+            }
+            return match
+        return None

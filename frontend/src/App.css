@@ -488,5 +488,19 @@ main {
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Compare selection highlight ─────────────────────────────── */
+.selected-for-compare {
+  border: 2px solid var(--accent) !important;
+  background: rgba(14, 165, 233, 0.02) !important;
+  transform: scale(1.005);
+  transition: all 0.3s ease;
+}
+
+/* ── Floating compare bar slide-up ───────────────────────────── */
+@keyframes slideUp {
+  from { transform: translate(-50%, 80px); opacity: 0; }
+  to   { transform: translate(-50%, 0);    opacity: 1; }
 }

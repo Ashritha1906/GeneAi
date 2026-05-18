@@ -142,8 +142,9 @@ const DiseaseDetailsPage = () => {
                 <table className="details-table ncbi-style">
                   <thead>
                     <tr>
-                      <th style={{ width: '50%' }}>Gene</th>
-                      <th style={{ width: '50%' }}>OMIM</th>
+                      <th style={{ width: '30%' }}>Gene</th>
+                      <th style={{ width: '40%' }}>Prevalence Region (India)</th>
+                      <th style={{ width: '30%' }}>OMIM</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -160,6 +161,21 @@ const DiseaseDetailsPage = () => {
                           >
                             {renderSafeValue(gene.gene)}
                           </a>
+                        </td>
+                        <td>
+                          <span style={{
+                            display: 'inline-block',
+                            background: '#e8f4fd',
+                            color: '#004a99',
+                            borderRadius: '6px',
+                            padding: '3px 10px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600'
+                          }}>
+                            {renderSafeValue(gene.region) !== 'N/A' && renderSafeValue(gene.region) !== 'undefined'
+                              ? renderSafeValue(gene.region)
+                              : 'Data not available'}
+                          </span>
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -260,7 +276,6 @@ const DiseaseDetailsPage = () => {
                       <th>Condition</th>
                       <th>Classification</th>
                       <th>Review Status</th>
-                      <th>Last Evaluated</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -280,7 +295,6 @@ const DiseaseDetailsPage = () => {
                         </td>
                         <td>{renderSafeValue(cond.classification)}</td>
                         <td style={{ color: '#fbc02d', letterSpacing: '2px' }}>{renderSafeValue(cond.review_status)}</td>
-                        <td>{renderSafeValue(cond.last_evaluated)}</td>
                       </tr>
                     ))}
                   </tbody>

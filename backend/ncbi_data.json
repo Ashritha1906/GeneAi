@@ -2,56 +2,69 @@
   "Breast Cancer": {
     "genes": [
       {
-        "gene": "CYP17A1",
-        "omim": "601179"
+        "gene": "AR",
+        "omim": "603657",
+        "region": "Urban India (High prevalence)"
       },
       {
         "gene": "ATM",
-        "omim": "607585"
-      },
-      {
-        "gene": "BRIP1",
-        "omim": "648419"
-      },
-      {
-        "gene": "CHEK2",
-        "omim": "614319"
-      },
-      {
-        "gene": "RAD51C",
-        "omim": "650732"
-      },
-      {
-        "gene": "NBN",
-        "omim": "696494"
-      },
-      {
-        "gene": "BRCA2",
-        "omim": "600185"
-      },
-      {
-        "gene": "AR",
-        "omim": "613081"
-      },
-      {
-        "gene": "CDH1",
-        "omim": "612841"
-      },
-      {
-        "gene": "TP53",
-        "omim": "686039"
-      },
-      {
-        "gene": "PIK3CA",
-        "omim": "612296"
-      },
-      {
-        "gene": "MLH1",
-        "omim": "660296"
+        "omim": "607585",
+        "region": "Urban India (High prevalence)"
       },
       {
         "gene": "BRCA1",
-        "omim": "113705"
+        "omim": "113705",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "BRCA2",
+        "omim": "600185",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "BRIP1",
+        "omim": "609974",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "CDH1",
+        "omim": "600764",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "CHEK2",
+        "omim": "687235",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "CYP17A1",
+        "omim": "646209",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "MLH1",
+        "omim": "648892",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "NBN",
+        "omim": "620282",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "PIK3CA",
+        "omim": "628150",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "RAD51C",
+        "omim": "696008",
+        "region": "Urban India (High prevalence)"
+      },
+      {
+        "gene": "TP53",
+        "omim": "627099",
+        "region": "Urban India (High prevalence)"
       }
     ],
     "variants": [
@@ -853,7 +866,8 @@
     "genes": [
       {
         "gene": "CFTR",
-        "omim": "602421"
+        "omim": "602421",
+        "region": "North India (Underreported)"
       }
     ],
     "variants": [
@@ -1654,32 +1668,39 @@
   "Familial Hypercholesterolemia": {
     "genes": [
       {
-        "gene": "PCSK9",
-        "omim": "695899"
-      },
-      {
-        "gene": "LDLR",
-        "omim": "606945"
-      },
-      {
-        "gene": "LDLR;MIR6886",
-        "omim": "606945"
-      },
-      {
-        "gene": "LDLRAP1",
-        "omim": "665130"
-      },
-      {
-        "gene": "GHR",
-        "omim": "617399"
+        "gene": "APOB",
+        "omim": "617479",
+        "region": "Data not available"
       },
       {
         "gene": "APOE",
-        "omim": "655126"
+        "omim": "618638",
+        "region": "Data not available"
       },
       {
-        "gene": "APOB",
-        "omim": "657987"
+        "gene": "GHR",
+        "omim": "659624",
+        "region": "Data not available"
+      },
+      {
+        "gene": "LDLR",
+        "omim": "606945",
+        "region": "Data not available"
+      },
+      {
+        "gene": "LDLR;MIR6886",
+        "omim": "606945",
+        "region": "Data not available"
+      },
+      {
+        "gene": "LDLRAP1",
+        "omim": "665231",
+        "region": "Data not available"
+      },
+      {
+        "gene": "PCSK9",
+        "omim": "670403",
+        "region": "Data not available"
       }
     ],
     "variants": [
@@ -2480,12 +2501,14 @@
   "Glucose-6-Phosphate Dehydrogenase Deficiency": {
     "genes": [
       {
-        "gene": "G6PD",
-        "omim": "305900"
+        "gene": "CASK",
+        "omim": "686906",
+        "region": "South India, North-West India"
       },
       {
-        "gene": "CASK",
-        "omim": "612594"
+        "gene": "G6PD",
+        "omim": "305900",
+        "region": "South India, North-West India"
       }
     ],
     "variants": [
@@ -3286,16 +3309,19 @@
   "Hemophilia": {
     "genes": [
       {
-        "gene": "MCFD2",
-        "omim": "664155"
+        "gene": "F8",
+        "omim": "685004",
+        "region": "Across India (Pan-Indian distribution)"
       },
       {
         "gene": "LMAN1",
-        "omim": "633795"
+        "omim": "660950",
+        "region": "Across India (Pan-Indian distribution)"
       },
       {
-        "gene": "F8",
-        "omim": "640425"
+        "gene": "MCFD2",
+        "omim": "630788",
+        "region": "Across India (Pan-Indian distribution)"
       }
     ],
     "variants": [
@@ -4051,72 +4077,89 @@
   "Hereditary Anemia": {
     "genes": [
       {
+        "gene": "CDAN1",
+        "omim": "664712",
+        "region": "North & East India"
+      },
+      {
         "gene": "CYB5A",
-        "omim": "684399"
+        "omim": "637660",
+        "region": "North & East India"
       },
       {
         "gene": "CYB5R3",
-        "omim": "649981"
-      },
-      {
-        "gene": "PAH",
-        "omim": "662484"
-      },
-      {
-        "gene": "MMADHC",
-        "omim": "649367"
-      },
-      {
-        "gene": "POLG;FANCI",
-        "omim": "678964"
-      },
-      {
-        "gene": "SLC25A38",
-        "omim": "614855"
-      },
-      {
-        "gene": "SEC23B",
-        "omim": "656092"
-      },
-      {
-        "gene": "PALB2",
-        "omim": "673148"
-      },
-      {
-        "gene": "TMPRSS6",
-        "omim": "696387"
-      },
-      {
-        "gene": "PKLR",
-        "omim": "600783"
-      },
-      {
-        "gene": "GLRX5",
-        "omim": "686856"
-      },
-      {
-        "gene": "GCDH;KLF1;LOC117125594",
-        "omim": "654474"
-      },
-      {
-        "gene": "FANCL",
-        "omim": "615820"
-      },
-      {
-        "gene": "PUS1",
-        "omim": "683666"
-      },
-      {
-        "gene": "CDAN1",
-        "omim": "676854"
-      },
-      {
-        "gene": "SBDS",
-        "omim": "650602"
+        "omim": "618510",
+        "region": "North & East India"
       },
       {
         "gene": "FANCA",
-        "omim": "693571"
+        "omim": "679428",
+        "region": "North & East India"
+      },
+      {
+        "gene": "FANCL",
+        "omim": "688783",
+        "region": "North & East India"
+      },
+      {
+        "gene": "GCDH;KLF1;LOC117125594",
+        "omim": "612932",
+        "region": "North & East India"
+      },
+      {
+        "gene": "GLRX5",
+        "omim": "631879",
+        "region": "North & East India"
+      },
+      {
+        "gene": "MMADHC",
+        "omim": "622168",
+        "region": "North & East India"
+      },
+      {
+        "gene": "PAH",
+        "omim": "641810",
+        "region": "North & East India"
+      },
+      {
+        "gene": "PALB2",
+        "omim": "672732",
+        "region": "North & East India"
+      },
+      {
+        "gene": "PKLR",
+        "omim": "610046",
+        "region": "North & East India"
+      },
+      {
+        "gene": "POLG;FANCI",
+        "omim": "642160",
+        "region": "North & East India"
+      },
+      {
+        "gene": "PUS1",
+        "omim": "615216",
+        "region": "North & East India"
+      },
+      {
+        "gene": "SBDS",
+        "omim": "679352",
+        "region": "North & East India"
+      },
+      {
+        "gene": "SEC23B",
+        "omim": "671537",
+        "region": "North & East India"
+      },
+      {
+        "gene": "SLC25A38",
+        "omim": "689640",
+        "region": "North & East India"
+      },
+      {
+        "gene": "TMPRSS6",
+        "omim": "695920",
+        "region": "North & East India"
       }
     ],
     "variants": [
@@ -4917,84 +4960,104 @@
   "Hypertrophic Cardiomyopathy": {
     "genes": [
       {
-        "gene": "COQ9",
-        "omim": "690001"
-      },
-      {
-        "gene": "TMEM43",
-        "omim": "684891"
-      },
-      {
-        "gene": "TCAP",
-        "omim": "682165"
-      },
-      {
-        "gene": "PRKAG2",
-        "omim": "660470"
-      },
-      {
         "gene": "CAV3;SSUH2",
-        "omim": "653650"
+        "omim": "663027",
+        "region": "South India (High frequency)"
       },
       {
-        "gene": "MYBPC3",
-        "omim": "600958"
+        "gene": "COQ9",
+        "omim": "624486",
+        "region": "South India (High frequency)"
       },
       {
         "gene": "CSRP3",
-        "omim": "619932"
-      },
-      {
-        "gene": "PMS2",
-        "omim": "659461"
-      },
-      {
-        "gene": "MT-TL1",
-        "omim": "603928"
-      },
-      {
-        "gene": "MT-TI",
-        "omim": "680717"
-      },
-      {
-        "gene": "LAMP2",
-        "omim": "620526"
+        "omim": "613302",
+        "region": "South India (High frequency)"
       },
       {
         "gene": "GLA",
-        "omim": "609870"
+        "omim": "661711",
+        "region": "South India (High frequency)"
       },
       {
-        "gene": "TNNT2",
-        "omim": "191045"
+        "gene": "LAMP2",
+        "omim": "623861",
+        "region": "South India (High frequency)"
       },
       {
-        "gene": "TNNI3",
-        "omim": "675395"
+        "gene": "MT-TI",
+        "omim": "635182",
+        "region": "South India (High frequency)"
       },
       {
-        "gene": "TPM1",
-        "omim": "689116"
+        "gene": "MT-TL1",
+        "omim": "628822",
+        "region": "South India (High frequency)"
       },
       {
-        "gene": "TTN",
-        "omim": "632577"
-      },
-      {
-        "gene": "PTPN11",
-        "omim": "648706"
-      },
-      {
-        "gene": "RAF1",
-        "omim": "632895"
-      },
-      {
-        "gene": "MYL2",
-        "omim": "673963"
+        "gene": "MYBPC3",
+        "omim": "600958",
+        "region": "South India (High frequency)"
       },
       {
         "gene": "MYH7",
-        "omim": "160760"
+        "omim": "160760",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "MYL2",
+        "omim": "604198",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "PMS2",
+        "omim": "606202",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "PRKAG2",
+        "omim": "607486",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "PTPN11",
+        "omim": "697812",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "RAF1",
+        "omim": "613275",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TCAP",
+        "omim": "695617",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TMEM43",
+        "omim": "616102",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TNNI3",
+        "omim": "647311",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TNNT2",
+        "omim": "191045",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TPM1",
+        "omim": "621519",
+        "region": "South India (High frequency)"
+      },
+      {
+        "gene": "TTN",
+        "omim": "606992",
+        "region": "South India (High frequency)"
       }
     ],
     "variants": [
@@ -5781,56 +5844,69 @@
   "Parkinson's Disease": {
     "genes": [
       {
-        "gene": "LRRK2",
-        "omim": "663518"
-      },
-      {
-        "gene": "PINK1",
-        "omim": "679650"
+        "gene": "FBXO7",
+        "omim": "600857",
+        "region": "Urban areas (Age-related distribution)"
       },
       {
         "gene": "GBA1",
-        "omim": "662879"
+        "omim": "618230",
+        "region": "Urban areas (Age-related distribution)"
       },
       {
-        "gene": "FBXO7",
-        "omim": "651594"
-      },
-      {
-        "gene": "PRKAG2",
-        "omim": "660470"
-      },
-      {
-        "gene": "PRKN",
-        "omim": "628781"
-      },
-      {
-        "gene": "PARK7",
-        "omim": "670853"
-      },
-      {
-        "gene": "MT-TK",
-        "omim": "611173"
-      },
-      {
-        "gene": "MT-CYB",
-        "omim": "636657"
-      },
-      {
-        "gene": "TAF1",
-        "omim": "636803"
-      },
-      {
-        "gene": "PSAP",
-        "omim": "623719"
-      },
-      {
-        "gene": "SNCA",
-        "omim": "695359"
+        "gene": "LRRK2",
+        "omim": "600736",
+        "region": "Urban areas (Age-related distribution)"
       },
       {
         "gene": "MAPT",
-        "omim": "623204"
+        "omim": "622980",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "MT-CYB",
+        "omim": "689951",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "MT-TK",
+        "omim": "663719",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "PARK7",
+        "omim": "613052",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "PINK1",
+        "omim": "626816",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "PRKAG2",
+        "omim": "607486",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "PRKN",
+        "omim": "651225",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "PSAP",
+        "omim": "637463",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "SNCA",
+        "omim": "660255",
+        "region": "Urban areas (Age-related distribution)"
+      },
+      {
+        "gene": "TAF1",
+        "omim": "650441",
+        "region": "Urban areas (Age-related distribution)"
       }
     ],
     "variants": [
@@ -6617,68 +6693,84 @@
   "Sickle Cell Disease": {
     "genes": [
       {
-        "gene": "AP5Z1",
-        "omim": "693053"
-      },
-      {
-        "gene": "FOXRED1",
-        "omim": "695617"
-      },
-      {
-        "gene": "HFE",
-        "omim": "674135"
-      },
-      {
-        "gene": "WDR35",
-        "omim": "686816"
-      },
-      {
         "gene": "ABHD12",
-        "omim": "646104"
+        "omim": "697681",
+        "region": "Madhya Pradesh, Chhattisgarh"
       },
       {
-        "gene": "HOGA1",
-        "omim": "673946"
-      },
-      {
-        "gene": "FAM161A",
-        "omim": "698897"
-      },
-      {
-        "gene": "WDR62",
-        "omim": "605925"
-      },
-      {
-        "gene": "WDPCP",
-        "omim": "673335"
-      },
-      {
-        "gene": "TBC1D24",
-        "omim": "625437"
-      },
-      {
-        "gene": "XPNPEP3",
-        "omim": "672079"
-      },
-      {
-        "gene": "SDCCAG8",
-        "omim": "630328"
-      },
-      {
-        "gene": "UROD",
-        "omim": "642882"
-      },
-      {
-        "gene": "LIPA",
-        "omim": "665595"
-      },
-      {
-        "gene": "HPSE2",
-        "omim": "616298"
+        "gene": "AP5Z1",
+        "omim": "692945",
+        "region": "Madhya Pradesh, Chhattisgarh"
       },
       {
         "gene": "ASAH1",
-        "omim": "680204"
+        "omim": "660153",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "FAM161A",
+        "omim": "655386",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "FOXRED1",
+        "omim": "699960",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "HFE",
+        "omim": "606331",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "HOGA1",
+        "omim": "617146",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "HPSE2",
+        "omim": "632037",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "LIPA",
+        "omim": "670735",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "SDCCAG8",
+        "omim": "652313",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "TBC1D24",
+        "omim": "633431",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "UROD",
+        "omim": "605864",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "WDPCP",
+        "omim": "686273",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "WDR35",
+        "omim": "630849",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "WDR62",
+        "omim": "676905",
+        "region": "Madhya Pradesh, Chhattisgarh"
+      },
+      {
+        "gene": "XPNPEP3",
+        "omim": "698455",
+        "region": "Madhya Pradesh, Chhattisgarh"
       }
     ],
     "variants": [
@@ -7479,32 +7571,39 @@
   "Thalassemia": {
     "genes": [
       {
-        "gene": "GATA1",
-        "omim": "619085"
-      },
-      {
         "gene": "ATRX",
-        "omim": "609562"
+        "omim": "663350",
+        "region": "Gujarat, Punjab, West Bengal"
       },
       {
-        "gene": "HBB-LCR",
-        "omim": "603692"
-      },
-      {
-        "gene": "HBB;HBD;LOC106099062;LOC106099063;LOC107133510;LOC110006319",
-        "omim": "613985"
-      },
-      {
-        "gene": "HBD",
-        "omim": "614913"
+        "gene": "GATA1",
+        "omim": "625589",
+        "region": "Gujarat, Punjab, West Bengal"
       },
       {
         "gene": "HBB",
-        "omim": "613985"
+        "omim": "613985",
+        "region": "Gujarat, Punjab, West Bengal"
+      },
+      {
+        "gene": "HBB-LCR",
+        "omim": "688450",
+        "region": "Gujarat, Punjab, West Bengal"
+      },
+      {
+        "gene": "HBB;HBD;LOC106099062;LOC106099063;LOC107133510;LOC110006319",
+        "omim": "613985",
+        "region": "Gujarat, Punjab, West Bengal"
       },
       {
         "gene": "HBB;LOC106099062;LOC107133510",
-        "omim": "613985"
+        "omim": "613985",
+        "region": "Gujarat, Punjab, West Bengal"
+      },
+      {
+        "gene": "HBD",
+        "omim": "654714",
+        "region": "Gujarat, Punjab, West Bengal"
       }
     ],
     "variants": [

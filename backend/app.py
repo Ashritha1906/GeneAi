@@ -88,6 +88,33 @@ def disease_details():
     details = predictor.get_disease_details(disease_name)
     return jsonify(details)
 
+@app.route('/get-all-diseases', methods=['GET'])
+def get_all_diseases():
+    diseases = predictor.get_all_diseases()
+    return jsonify({"diseases": diseases})
+
+@app.route('/get-disease', methods=['GET'])
+def get_disease():
+    disease_name = request.args.get('name')
+    if not disease_name:
+        return jsonify({"error": "Please provide a disease 'name'"}), 400
+    details = predictor.get_disease_by_name(disease_name)
+    if details:
+        return jsonify(details)
+    return jsonify({"error": "Disease not found"}), 404
+
+def deduplicate(records, keys):
+    """Remove duplicate dicts from a list based on the given key fields."""
+    seen = set()
+    result = []
+    for r in records:
+        # Build a hashable signature from the specified keys
+        sig = tuple(str(r.get(k, '')).strip().lower() for k in keys)
+        if sig not in seen:
+            seen.add(sig)
+            result.append(r)
+    return result
+
 @app.route('/more-details', methods=['GET'])
 def more_details():
     disease_name = request.args.get('disease', '').strip()
@@ -107,6 +134,7 @@ def more_details():
                 data = NCBI_DATASET[key]
                 break
     
+<<<<<<< HEAD
     # If we found data locally and aren't searching for a specific variation, return local data
     if data and not variation_term:
         return jsonify(data)
@@ -190,6 +218,62 @@ def more_details():
             return {"genes": [], "variants": [], "conditions": []}
     data = fetch_clinvar_tables(search_term)
     return jsonify(data)
+=======
+    if not data:
+        return jsonify({"genes": [], "variants": [], "conditions": []})
+
+    return jsonify({
+        "genes":      deduplicate(data.get("genes",      []), ["gene", "omim"]),
+        "variants":   deduplicate(data.get("variants",   []), ["variation", "protein_change", "consequence"]),
+        "conditions": deduplicate(data.get("conditions", []), ["condition", "classification", "review_status"])
+    })
+
+@app.route('/disease-full', methods=['GET'])
+def disease_full():
+    """Returns everything needed for the Disease Browser page in one call."""
+    disease_name = request.args.get('name')
+    if not disease_name:
+        return jsonify({"error": "Disease name is required"}), 400
+
+    # 1. Get ML model data (description, causes, prevention, genes, doctor, progression etc.)
+    ml_data = predictor.get_disease_by_name(disease_name)
+    if not ml_data:
+        # Fallback: try get_disease_details
+        ml_data = predictor.get_disease_details(disease_name)
+
+    # 2. Get NCBI genomic data (gene table, variants, conditions)
+    clean_name = disease_name.replace('_', ' ').strip()
+    ncbi_data = NCBI_DATASET.get(clean_name)
+    if not ncbi_data:
+        for key in NCBI_DATASET:
+            if key.lower() == clean_name.lower():
+                ncbi_data = NCBI_DATASET[key]
+                break
+    if not ncbi_data:
+        ncbi_data = {"genes": [], "variants": [], "conditions": []}
+
+    # 3. Get symptoms from predictor's symptom map
+    disease_key = disease_name.lower().strip()
+    symptoms_str = predictor.symptom_mapping.get(disease_key, "")
+    symptoms_list = [s.strip().capitalize() for s in symptoms_str.split(" ") if len(s.strip()) > 3] if symptoms_str else []
+
+    # Build merged response
+    result = {
+        "name": disease_name,
+        "description":         ml_data.get("description", "Not available") if ml_data else "Not available",
+        "causes":              ml_data.get("causes", "Not available") if ml_data else "Not available",
+        "prevention":          ml_data.get("prevention", "Not available") if ml_data else "Not available",
+        "affected_organ":      ml_data.get("affected_organ", "General / Multiple") if ml_data else "General / Multiple",
+        "doctor_recommendation": ml_data.get("doctor_recommendation", "General Physician") if ml_data else "General Physician",
+        "progression":         ml_data.get("progression") if ml_data else None,
+        "prevalence_in_india": ml_data.get("prevalence_in_india", "Data not available") if ml_data else "Data not available",
+        "symptoms":            symptoms_list,
+        "genes":               deduplicate(ncbi_data.get("genes", []),      ["gene", "omim"]),
+        "variants":            deduplicate(ncbi_data.get("variants", []),   ["variation", "protein_change", "consequence"]),
+        "conditions":          deduplicate(ncbi_data.get("conditions", []), ["condition", "classification", "review_status"]),
+    }
+    return jsonify(result)
+>>>>>>> b3d9ddf (Added my feature updates)
 
 @app.route('/chat', methods=['POST'])
 def chat():
