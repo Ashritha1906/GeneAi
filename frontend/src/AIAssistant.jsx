@@ -95,13 +95,14 @@ const AIAssistant = ({ currentDisease }) => {
     console.log("Fetching AI Response for:", userText);
     
     try {
-      const response = await fetch("http://localhost:3000/ask", {
+      const response = await fetch("http://localhost:5000/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question: userText,
+          message: userText,
+          context: getContext()?.disease || 'General medical query'
         }),
       });
 
@@ -112,7 +113,7 @@ const AIAssistant = ({ currentDisease }) => {
       const data = await response.json();
       console.log("Groq API Response:", data);
       
-      const aiReply = data.answer || "No response received.";
+      const aiReply = data.response || "No response received.";
       speak(aiReply);
       return aiReply;
     } catch (error) {
@@ -181,7 +182,7 @@ const AIAssistant = ({ currentDisease }) => {
         <div className="ai-chat-window">
           <div className="chat-header">
             <Bot size={20} />
-            <h3>GenoPredict AI Voice</h3>
+            <h3>GenoPredict AI</h3>
             <div style={{ flex: 1 }}></div>
             <Sparkles size={16} style={{ opacity: 0.8 }} />
           </div>
@@ -231,9 +232,7 @@ const AIAssistant = ({ currentDisease }) => {
             </button>
           </form>
 
-          <div className="chat-footer">
-            Groq Llama 3 AI • Voice Enabled
-          </div>
+
         </div>
       )}
 

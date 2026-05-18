@@ -26,6 +26,7 @@ import { jsPDF } from 'jspdf'
 import AnatomyVisualization from './AnatomyVisualization'
 import DiseaseDetailsPage from './DiseaseDetailsPage'
 import AIAssistant from './AIAssistant'
+import PrevalenceMap from './PrevalenceMap'
 import './App.css'
 
 const DiseaseComparison = ({ results }) => {
