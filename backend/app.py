@@ -14,11 +14,7 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 
-if GROQ_API_KEY:
-    masked_key = f"{GROQ_API_KEY[:4]}...{GROQ_API_KEY[-4:]}"
-    print(f"DEBUG: GROQ_API_KEY loaded: {masked_key}")
-else:
-    print("DEBUG: GROQ_API_KEY is missing.")
+print(f"DEBUG: GROQ_API_KEY present: {'Yes' if GROQ_API_KEY else 'No'}")
 
 # Initialize Groq Client
 client = None
@@ -32,14 +28,14 @@ if GROQ_API_KEY:
 if not GROQ_API_KEY:
     print("CRITICAL: No Groq API Key found in .env file. AI Assistant will be unavailable.")
 
-BASE_INSTRUCTIONS = (
-    "Provide the direct, correct answer to the user's question. "
-    "Do NOT give lengthy or detailed explanations. Keep your answers extremely concise, short, and to the point (maximum 1-3 sentences)."
+SYSTEM_PROMPT = (
+    "You are a medical assistant for a bioinformatics project. "
+    "Give clear, short, and accurate explanations about diseases. "
+    "Avoid complex jargon. Answer in 2–4 lines maximum."
 )
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-
 # Initialize ML Model
 DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "final_genomic_dataset.csv")
 predictor = DiseasePredictor(data_path=DATA_FILE)
@@ -75,7 +71,6 @@ def predict_disease():
     if not data or 'symptoms' not in data:
         return jsonify({"error": "Please provide 'symptoms' in the request body"}), 400
     user_input = data['symptoms']
-    print(f"Prediction request: {user_input}")
     top_n = data.get('limit', 3)
     results = predictor.predict(user_input, top_n=top_n)
     return jsonify(results)
@@ -87,33 +82,6 @@ def disease_details():
         return jsonify({"error": "Please provide a disease 'name'"}), 400
     details = predictor.get_disease_details(disease_name)
     return jsonify(details)
-
-@app.route('/get-all-diseases', methods=['GET'])
-def get_all_diseases():
-    diseases = predictor.get_all_diseases()
-    return jsonify({"diseases": diseases})
-
-@app.route('/get-disease', methods=['GET'])
-def get_disease():
-    disease_name = request.args.get('name')
-    if not disease_name:
-        return jsonify({"error": "Please provide a disease 'name'"}), 400
-    details = predictor.get_disease_by_name(disease_name)
-    if details:
-        return jsonify(details)
-    return jsonify({"error": "Disease not found"}), 404
-
-def deduplicate(records, keys):
-    """Remove duplicate dicts from a list based on the given key fields."""
-    seen = set()
-    result = []
-    for r in records:
-        # Build a hashable signature from the specified keys
-        sig = tuple(str(r.get(k, '')).strip().lower() for k in keys)
-        if sig not in seen:
-            seen.add(sig)
-            result.append(r)
-    return result
 
 @app.route('/more-details', methods=['GET'])
 def more_details():
@@ -199,43 +167,23 @@ def chat():
     user_message = data['message']
     disease_context = data.get('context', 'General medical query')
     
-    print(f"Chat request: {user_message}")
     print(f"DEBUG: Chat request received: '{user_message[:50]}...'")
     
-    import re
-    msg_lower = user_message.lower()
-    
-    is_vague = bool(re.search(r'\b(this disease|the disease|this prediction|prediction|it|symptoms)\b', msg_lower))
-    has_context = disease_context and disease_context != 'General medical query'
-    mentions_context = has_context and disease_context.lower() in msg_lower
-
-    if is_vague and not mentions_context and has_context:
-        dynamic_system_prompt = f"You are a medical assistant. Answer based on this disease: {disease_context}. {BASE_INSTRUCTIONS}"
-    else:
-        dynamic_system_prompt = f"You are a helpful scientific assistant. {BASE_INSTRUCTIONS}"
-
     if client:
         try:
-            print("DEBUG: Attempting Groq API...")
+            print("DEBUG: Attempting Groq API (llama3-8b-8192)...")
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile", # fallback from decommissioned llama3-8b-8192
+                model="llama3-8b-8192",
                 messages=[
-                    {"role": "system", "content": dynamic_system_prompt},
-                    {"role": "user", "content": user_message}
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Context: {disease_context}\n\nQuestion: {user_message}"}
                 ]
             )
             ai_response = response.choices[0].message.content
-            
-            if not ai_response:
-                ai_response = "AI response not available"
-            
-            print("User:", user_message)
-            print("AI:", ai_response)
-            
             print(f"DEBUG: Groq Success. Response length: {len(ai_response)}")
             return jsonify({"response": ai_response})
         except Exception as e:
-            print("Groq Error:", e)
+            print(f"ERROR: Groq API call failed: {str(e)}")
             return jsonify({"response": "AI service temporarily unavailable"}), 503
 
     return jsonify({
