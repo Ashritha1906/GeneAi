@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
-import { ArrowLeft, Map as MapIcon, Info, AlertCircle } from 'lucide-react';
-import indiaGeo from './india-states.json';
+import { ArrowLeft, Map as MapIcon, Info, AlertCircle, Loader2 } from 'lucide-react';
 import './App.css';
+
+// GeoJSON is fetched on-demand from /public (not bundled) to avoid blocking page load
 
 const insights = {
   "thalassemia": "Thalassemia is highly prevalent in Gujarat, Maharashtra, and West Bengal due to higher carrier frequency in specific communities.",
@@ -37,7 +38,28 @@ const PrevalenceMap = () => {
   const { diseaseName } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const [indiaGeo, setIndiaGeo] = useState(null);
+  const [geoLoading, setGeoLoading] = useState(true);
+  const [geoError, setGeoError] = useState(null);
+
+  useEffect(() => {
+    setGeoLoading(true);
+    fetch('/india-states.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load map data');
+        return res.json();
+      })
+      .then(data => {
+        setIndiaGeo(data);
+        setGeoLoading(false);
+      })
+      .catch(err => {
+        console.error('Map load error:', err);
+        setGeoError('Could not load map data.');
+        setGeoLoading(false);
+      });
+  }, []);
+
   const queryParams = new URLSearchParams(location.search);
   const rawStates = queryParams.get('states') || location.state?.result?.common_states || "";
   const commonStatesStr = useMemo(() => {
@@ -99,7 +121,17 @@ const PrevalenceMap = () => {
         <div className="disease-main-card" style={{ width: '100%', maxWidth: '1000px', padding: '2rem' }}>
           <h1 style={{ textAlign: 'center', marginBottom: '5px' }}>{diseaseName} - Regional Prevalence</h1>
           
-          {!hasData ? (
+          {geoLoading ? (
+            <div style={{ textAlign: 'center', padding: '4rem' }}>
+              <Loader2 size={48} style={{ margin: '0 auto 20px auto', color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+              <p style={{ color: 'var(--text-muted)' }}>Loading map data...</p>
+            </div>
+          ) : geoError ? (
+            <div className="error-msg" style={{ margin: '2rem auto', maxWidth: '600px' }}>
+              <AlertCircle size={24} />
+              <p>{geoError}</p>
+            </div>
+          ) : !hasData ? (
             <div className="error-msg" style={{ margin: '2rem auto', maxWidth: '600px' }}>
               <AlertCircle size={24} />
               <p>No specific regional prevalence data available for this condition.</p>

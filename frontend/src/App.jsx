@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { 
@@ -29,15 +29,17 @@ import {
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import AnatomyVisualization from './AnatomyVisualization'
-import DiseaseDetailsPage from './DiseaseDetailsPage'
 import AIAssistant from './AIAssistant'
-import PrevalenceMap from './PrevalenceMap'
 import DiseaseComparison from './DiseaseComparison'
 import DiseaseBrowser from './DiseaseBrowser'
 import './App.css'
 
 // ─── localStorage helpers ───────────────────────────────────────────────────
 const HISTORY_KEY = 'geno_history';
+
+// Lazy-load heavy pages so they don't block the initial bundle
+const DiseaseDetailsPage = lazy(() => import('./DiseaseDetailsPage'))
+const PrevalenceMap = lazy(() => import('./PrevalenceMap'))
 
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
@@ -93,21 +95,28 @@ function App() {
       </header>
 
       <main className="main-container">
-        <Routes>
-          <Route path="/" element={
-            <Dashboard
-              query={query} setQuery={setQuery}
-              handleSearch={handleSearch}
-              loading={loading} error={error}
-              results={results} setResults={setResults}
-              navigate={navigate}
-            />
-          } />
-          <Route path="/more-details/:diseaseName" element={<DiseaseDetailsPage />} />
-          <Route path="/prevalence-map/:diseaseName" element={<PrevalenceMap />} />
-          <Route path="/compare" element={<DiseaseComparison />} />
-          <Route path="/browse" element={<DiseaseBrowser />} />
-        </Routes>
+        <Suspense fallback={
+          <div style={{ textAlign: 'center', padding: '6rem', color: 'var(--text-muted)' }}>
+            <div className="spinner" style={{ width: 48, height: 48, border: '4px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', margin: '0 auto 1rem', animation: 'spin 1s linear infinite' }} />
+            <p>Loading page...</p>
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={
+              <Dashboard
+                query={query} setQuery={setQuery}
+                handleSearch={handleSearch}
+                loading={loading} error={error}
+                results={results} setResults={setResults}
+                navigate={navigate}
+              />
+            } />
+            <Route path="/more-details/:diseaseName" element={<DiseaseDetailsPage />} />
+            <Route path="/prevalence-map/:diseaseName" element={<PrevalenceMap />} />
+            <Route path="/compare" element={<DiseaseComparison />} />
+            <Route path="/browse" element={<DiseaseBrowser />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <footer style={{ padding: '4rem 2rem', borderTop: '1px solid var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
