@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bot, X, MessageSquare, Sparkles, HelpCircle, AlertTriangle, Send, Loader2, Mic, MicOff, Volume2 } from 'lucide-react';
+import { Bot, X, MessageSquare, Sparkles, HelpCircle, AlertTriangle, Send, Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import './AIAssistant.css';
 
 const AIAssistant = ({ currentDisease }) => {
@@ -8,6 +8,7 @@ const AIAssistant = ({ currentDisease }) => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const location = useLocation();
   const [messages, setMessages] = useState([
     { id: 1, type: 'ai', text: "Hello! I'm your GenoPredict Assistant. How can I help you today?" }
@@ -42,6 +43,22 @@ const AIAssistant = ({ currentDisease }) => {
     }
   }, []);
 
+  // Cancel speech output when the chat window is closed
+  useEffect(() => {
+    if (!isOpen && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [isOpen]);
+
+  // Clean up speech output on unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
       try {
@@ -61,7 +78,7 @@ const AIAssistant = ({ currentDisease }) => {
   };
 
   const speak = (text) => {
-    if ('speechSynthesis' in window) {
+    if (isVoiceEnabled && 'speechSynthesis' in window) {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -184,6 +201,31 @@ const AIAssistant = ({ currentDisease }) => {
             <Bot size={20} />
             <h3>GenoPredict AI</h3>
             <div style={{ flex: 1 }}></div>
+            <button 
+              type="button"
+              onClick={() => {
+                const newValue = !isVoiceEnabled;
+                setIsVoiceEnabled(newValue);
+                if (!newValue && 'speechSynthesis' in window) {
+                  window.speechSynthesis.cancel();
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                cursor: 'pointer',
+                padding: '4px',
+                marginRight: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                opacity: isVoiceEnabled ? 1 : 0.5,
+                transition: 'opacity 0.2s'
+              }}
+              title={isVoiceEnabled ? "Mute Voice Output" : "Unmute Voice Output"}
+            >
+              {isVoiceEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
             <Sparkles size={16} style={{ opacity: 0.8 }} />
           </div>
           
@@ -231,7 +273,6 @@ const AIAssistant = ({ currentDisease }) => {
               {loading ? <Loader2 size={18} className="spinner" /> : <Send size={18} />}
             </button>
           </form>
-
 
         </div>
       )}

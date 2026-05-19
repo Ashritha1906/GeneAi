@@ -379,9 +379,34 @@ export default function DiseaseBrowser() {
             {/* ── 8. Region in India ── */}
             <div className="info-section-box full-width" style={{ marginBottom: '20px' }}>
               <div className="section-box-title"><MapPin size={18} /> Regional Prevalence in India</div>
-              <p style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--accent,#0ea5e9)', marginTop: '10px' }}>
-                📍 Common in: <strong>{data.prevalence_in_india || 'Data not available'}</strong>
-              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+                <p style={{ fontSize: '1.05rem', fontWeight: '600', color: 'var(--accent,#0ea5e9)', margin: 0 }}>
+                  📍 Common in: <strong>{data.common_states || data.prevalence_in_india || 'Nationwide / General'}</strong>
+                </p>
+                <a 
+                  href={`/prevalence-map/${encodeURIComponent(selected)}?states=${encodeURIComponent(data.common_states || 'Nationwide')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="search-btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    background: 'var(--accent, #0ea5e9)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    padding: '8px 16px',
+                    fontSize: '0.85rem',
+                    borderRadius: '6px',
+                    alignSelf: 'flex-start',
+                    boxShadow: 'none',
+                    fontWeight: '700'
+                  }}
+                >
+                  <MapPin size={16} /> Show in Map
+                </a>
+              </div>
             </div>
 
             {/* ── 9. Doctor Recommendation ── */}

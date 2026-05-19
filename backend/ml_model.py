@@ -126,7 +126,6 @@ class DiseasePredictor:
             "hereditary_anemia": "Blood"
         }
 
-<<<<<<< HEAD
         # State Mapping for India
         self.state_map = {
             "thalassemia": "Gujarat, Maharashtra, West Bengal",
@@ -147,7 +146,8 @@ class DiseasePredictor:
             "hcm": "Nationwide",
             "hereditary anemia": "Nationwide",
             "hereditary_anemia": "Nationwide"
-=======
+        }
+
         # Doctor Recommendation Mapping
         self.doctor_map = {
             "thalassemia": "Hematologist",
@@ -237,7 +237,6 @@ class DiseasePredictor:
             "cystic fibrosis": "cough lung infection shortness of breath wheezing salty skin poor growth greasy stools mucus",
             "hypertrophic cardiomyopathy": "shortness of breath chest pain fainting heart murmur palpitations rapid heartbeat dizziness syncope",
             "hereditary anemia": "fatigue weakness pale skin tired lethargy shortness of breath irregular heartbeats cold hands feet"
->>>>>>> b3d9ddf (Added my feature updates)
         }
 
     # Feature 3: Input Enhancement
@@ -323,12 +322,9 @@ class DiseasePredictor:
                         "common_states": self.state_map.get(disease_key, "General / Multiple"),
                         "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                         "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
-<<<<<<< HEAD
-                        "variation": str(row.get('variation', ''))
-=======
+                        "variation": str(row.get('variation', '')),
                         "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),
                         "progression": self.progression_map.get(disease_key, None)
->>>>>>> b3d9ddf (Added my feature updates)
                     }
                     results.append(match)
                     if len(results) >= 1:
@@ -381,12 +377,9 @@ class DiseasePredictor:
                     "common_states": self.state_map.get(disease_key, "General / Multiple"),
                     "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                     "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
-<<<<<<< HEAD
-                    "variation": str(row.get('variation', ''))
-=======
+                    "variation": str(row.get('variation', '')),
                     "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),
                     "progression": self.progression_map.get(disease_key, None)
->>>>>>> b3d9ddf (Added my feature updates)
                 }
                 results.append(match)
                 
@@ -412,6 +405,12 @@ class DiseasePredictor:
         if details:
             # Create a copy to avoid mutating the original dictionary
             result = details.copy()
+            disease_key = disease_name.lower().strip()
+            result['affected_organ'] = self.organ_map.get(disease_key, "General / Multiple")
+            result['doctor_recommendation'] = self.doctor_map.get(disease_key, "General Physician")
+            result['common_states'] = self.state_map.get(disease_key, "Nationwide")
+            result['progression'] = self.progression_map.get(disease_key, None)
+            
             if self.df is not None:
                 # Get all unique gene strings for this disease
                 raw_genes = self.df[self.df['disease'].str.lower() == disease_name.lower()]['gene_name'].unique().tolist()
@@ -478,6 +477,7 @@ class DiseasePredictor:
                 "related_genes": str(row.get('gene_name', '')).replace(';', ','),
                 "mutation_info": f"Variation: {row.get('variation', 'N/A')} | Protein Change: {row.get('protein_change', 'N/A')} | Consequence: {row.get('consequence', 'N/A')} | Condition: {row.get('condition', 'N/A')} | Review Status: {row.get('review_status', 'N/A')}",
                 "prevalence_in_india": row.get('region', 'Data not available'),
+                "common_states": self.state_map.get(disease_key, "Nationwide"),
                 "recovery_treatment": row.get('recovery', 'Consult a healthcare professional'),
                 "affected_organ": self.organ_map.get(disease_key, "General / Multiple"),
                 "doctor_recommendation": self.doctor_map.get(disease_key, 'General Physician'),

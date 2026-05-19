@@ -21,12 +21,24 @@ import {
   Loader2,
   Download,
   Mic,
+<<<<<<< HEAD
   MicOff
+=======
+  MicOff,
+  GitCompare,
+  CheckCircle2,
+  History as HistoryIcon,
+  Trash2,
+  Clock,
+  X,
+  UserCheck
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import AnatomyVisualization from './AnatomyVisualization'
 import DiseaseDetailsPage from './DiseaseDetailsPage'
 import AIAssistant from './AIAssistant'
+<<<<<<< HEAD
 import './App.css'
 
 const DiseaseComparison = ({ results }) => {
@@ -74,6 +86,30 @@ const DiseaseComparison = ({ results }) => {
   );
 };
 
+=======
+import PrevalenceMap from './PrevalenceMap'
+import DiseaseComparison from './DiseaseComparison'
+import DiseaseBrowser from './DiseaseBrowser'
+import './App.css'
+
+// ─── localStorage helpers ───────────────────────────────────────────────────
+const HISTORY_KEY = 'geno_history';
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveHistory(symptoms, results) {
+  const history = loadHistory();
+  const entry = { id: Date.now(), symptoms, results, timestamp: new Date().toLocaleString() };
+  const updated = [entry, ...history].slice(0, 10);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  return updated;
+}
+
+// ─── App root ───────────────────────────────────────────────────────────────
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
 function App() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -131,6 +167,11 @@ function App() {
           } />
           <Route path="/more-details/:diseaseName" element={<DiseaseDetailsPage />} />
           <Route path="/prevalence-map/:diseaseName" element={<PrevalenceMap />} />
+<<<<<<< HEAD
+=======
+          <Route path="/compare" element={<DiseaseComparison />} />
+          <Route path="/browse" element={<DiseaseBrowser />} />
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
         </Routes>
       </main>
 
@@ -157,12 +198,22 @@ const parseMutationInfo = (infoStr) => {
 };
 const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
   const mutationData = parseMutationInfo(result.mutation_info);
+<<<<<<< HEAD
   const genes = result.related_genes ? result.related_genes.split(',').map(g => g.trim()) : [];
 
   let riskColor = 'risk-low';
   let riskLabel = 'Low Risk';
   if (result.confidence_score > 70) { riskColor = 'risk-high'; riskLabel = 'High Risk'; }
   else if (result.confidence_score >= 40) { riskColor = 'risk-medium'; riskLabel = 'Medium Risk'; }
+=======
+  const genes        = result.related_genes
+    ? result.related_genes.split(',').map(g => g.trim()).filter(g => g && g.toUpperCase() !== 'N/A')
+    : [];
+
+  let riskColor = 'risk-low', riskLabel = 'Low Risk';
+  if (result.confidence_score > 80)      { riskColor = 'risk-high';   riskLabel = 'High Risk'; }
+  else if (result.confidence_score > 50) { riskColor = 'risk-medium'; riskLabel = 'Medium Risk'; }
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
 
   const handleDownloadPDF = (result) => {
     const doc = new jsPDF();
@@ -238,6 +289,11 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
 
     doc.save(`${(result.disease || "clinical_report").replace(/[^a-zA-Z0-9]/g, '_')}_Report.pdf`);
   };
+<<<<<<< HEAD
+=======
+
+  const stageColors = ['#10b981', '#f59e0b', '#ef4444'];
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
 
   return (
     <div key={index} className={`disease-main-card ${isTop ? 'top-result' : ''}`}>
@@ -274,6 +330,7 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
         <div className="info-section-box">
           <div className="section-box-title"><MapPin size={18} /> Prevalence in India</div>
           <p style={{ fontWeight: '600', marginBottom: '10px' }}>{result.prevalence_in_india || 'Nationwide / General Prevalence'}</p>
+<<<<<<< HEAD
           {result.common_states && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}><strong>Common States:</strong> {result.common_states}</p>
@@ -302,6 +359,37 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
             </div>
           )}
         </div>        <div className="info-section-box full-width">
+=======
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}><strong>Common States:</strong> {result.common_states || 'Nationwide / General'}</p>
+            <a 
+              href={`/prevalence-map/${encodeURIComponent(result.disease)}?states=${encodeURIComponent(result.common_states || 'Nationwide')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="search-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '5px',
+                background: 'var(--accent)',
+                color: 'white',
+                textDecoration: 'none',
+                padding: '5px 10px',
+                fontSize: '0.85rem',
+                borderRadius: '4px',
+                alignSelf: 'flex-start',
+                boxShadow: 'none'
+              }}
+            >
+              <MapPin size={16} /> Show in Map
+            </a>
+          </div>
+        </div>
+
+        {/* Mutation Details */}
+        <div className="info-section-box full-width">
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
           <div className="section-box-title"><FlaskConical size={18} /> Mutation Details</div>
           <div className="mutation-table-container">
             <table className="mutation-table">
@@ -371,7 +459,11 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
         >
           <Download size={20} /> Download PDF
         </button>
+<<<<<<< HEAD
         <button
+=======
+        <button 
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
           onClick={() => navigate(`/more-details/${encodeURIComponent(result.disease)}?variation=${encodeURIComponent(result.variation || '')}`)}
           className="search-btn"
           style={{
@@ -394,6 +486,11 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate }) => {
 const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, navigate }) => {
   const inputRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
+<<<<<<< HEAD
+=======
+  const [selectedDiseases, setSelectedDiseases] = useState([]);
+  const [history, setHistory]                   = useState([]);
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
 
   // Maintain focus even after re-renders
   useEffect(() => {
@@ -500,8 +597,17 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, nav
         <div className="content-layout">
           <div className="results-container">
             {!Array.isArray(results)
+<<<<<<< HEAD
               ? <RenderDiseaseCard result={results} isTop={true} navigate={navigate} />
               : results.map((res, i) => <RenderDiseaseCard key={i} result={res} isTop={i === 0} index={i} navigate={navigate} />)
+=======
+              ? <RenderDiseaseCard result={results} isTop={true} navigate={navigate}
+                  selectedDiseases={selectedDiseases} onToggleSelection={toggleDiseaseSelection} />
+              : results.map((res, i) =>
+                  <RenderDiseaseCard key={i} result={res} isTop={i === 0} index={i} navigate={navigate}
+                    selectedDiseases={selectedDiseases} onToggleSelection={toggleDiseaseSelection} />
+                )
+>>>>>>> 5f347fe08a64418dac5d89e36d8c3ea509dc9c2a
             }
             {Array.isArray(results) && results.length > 1 && (
               <DiseaseComparison results={results} />
