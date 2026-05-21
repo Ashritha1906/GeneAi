@@ -289,7 +289,7 @@ class DiseasePredictor:
             print(f"Error loading data: {e}")
             return False
 
-    def predict(self, user_input, top_n=5):
+    def predict(self, user_input, top_n=5, symptom_duration=None):
         if self.df is None or self.tfidf_matrix is None:
             return {"error": "Model not loaded"}
 
@@ -313,6 +313,7 @@ class DiseasePredictor:
                     match = {
                         "disease": disease_name,
                         "confidence_score": 100.0,
+                        "symptom_duration": symptom_duration or 'Unknown',
                         "description": disease_details.get("description", "Description not available."),
                         "causes": disease_details.get("causes", "Information not available"),
                         "prevention": disease_details.get("prevention", "Information not available"),
@@ -340,17 +341,29 @@ class DiseasePredictor:
         
         highest_score = similarities[top_indices[0]] if len(top_indices) > 0 else 0
         
+        duration_factor = 1.0
+        duration_label = symptom_duration.strip().lower() if symptom_duration else ''
+        if duration_label == '1-2 days':
+            duration_factor = 0.97
+        elif duration_label == 'more than 5 days':
+            duration_factor = 1.03
+        
         # Feature 1: Smart Disease Selection
         is_strong_match = highest_score > 0.60
         threshold = 0.10 if not is_strong_match else 0.60
+        if duration_label == '1-2 days':
+            threshold = min(0.9, threshold + 0.02)
+        elif duration_label == 'more than 5 days':
+            threshold = max(0.0, threshold - 0.02)
         max_results = 1 if is_strong_match else top_n
         
         results = []
         seen_diseases = set()
         
         for idx in top_indices:
-            score = similarities[idx]
-            if score < threshold:
+            raw_score = similarities[idx]
+            adjusted_score = min(1.0, raw_score * duration_factor)
+            if adjusted_score < threshold:
                 break
                 
             row = self.df.iloc[idx]
@@ -363,11 +376,12 @@ class DiseasePredictor:
                 disease_details = self.disease_info.get(disease_key, {})
                 
                 # Feature 2: Confidence Scoring
-                confidence = round(score * 100, 2)
+                confidence = round(adjusted_score * 100, 2)
                 
                 match = {
                     "disease": disease_name,
                     "confidence_score": confidence,
+                    "symptom_duration": symptom_duration or 'Unknown',
                     "description": disease_details.get("description", "Description not available."),
                     "causes": disease_details.get("causes", "Information not available"),
                     "prevention": disease_details.get("prevention", "Information not available"),

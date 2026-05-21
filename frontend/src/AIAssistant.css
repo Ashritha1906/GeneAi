@@ -235,6 +235,37 @@
   }
 }
 
+@media (max-width: 768px) {
+  .ai-assistant-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: auto;
+  }
+
+  .ai-chat-window {
+    width: min(100vw, 340px);
+    max-height: 85vh;
+  }
+
+  .chat-header,
+  .chat-input-container,
+  .chat-actions {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .chat-input {
+    font-size: 0.95rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .send-btn,
+  .mic-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
 /* Scrollbar for chat */
 .chat-messages::-webkit-scrollbar {
   width: 4px;

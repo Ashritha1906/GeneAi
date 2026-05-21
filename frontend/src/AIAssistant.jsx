@@ -112,29 +112,24 @@ const AIAssistant = ({ currentDisease }) => {
     console.log("Fetching AI Response for:", userText);
     
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch("/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userText,
-          context: getContext()?.disease || 'General medical query'
+          message: userText
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
-      console.log("Groq API Response:", data);
-      
-      const aiReply = data.response || "No response received.";
+      console.log("Chat API response:", data);
+
+      const aiReply = data?.response || "AI response not available. Please try again.";
       speak(aiReply);
       return aiReply;
     } catch (error) {
-      console.error("Groq API Integration Error:", error);
+      console.error("Chat request failed:", error);
       return "AI response not available. Please try again.";
     } finally {
       setLoading(false);

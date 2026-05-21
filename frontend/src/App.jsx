@@ -13,6 +13,7 @@ import {
   RefreshCw,
   FlaskConical,
   ChevronRight,
+  ChevronDown,
   FileText,
   Layers,
   Loader2,
@@ -61,6 +62,7 @@ function saveHistory(symptoms, results) {
 function App() {
   const navigate   = useNavigate()
   const [query,   setQuery]   = useState('')
+  const [symptomDuration, setSymptomDuration] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
   const [error,   setError]   = useState(null)
@@ -70,7 +72,7 @@ function App() {
     if (!query.trim()) return
     setLoading(true); setError(null); setResults(null)
     try {
-      const response = await axios.post('http://localhost:5000/predict', { symptoms: query })
+      const response = await axios.post('http://localhost:5000/predict', { symptoms: query, duration: symptomDuration, limit: 3 })
       if (response.data.error || response.data.message) {
         setError(response.data.error || response.data.message)
       } else {
@@ -109,6 +111,7 @@ function App() {
               <Dashboard
                 query={query} setQuery={setQuery}
                 handleSearch={handleSearch}
+                symptomDuration={symptomDuration} setSymptomDuration={setSymptomDuration}
                 loading={loading} error={error}
                 results={results} setResults={setResults}
                 navigate={navigate}
@@ -171,10 +174,15 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate, selecte
     doc.setFont("helvetica", "normal");
     doc.text(result.disease || "N/A", 20, 55);
 
+    doc.setTextColor(120);
+    doc.setFontSize(10);
+    doc.text("This report is AI-generated and intended for informational purposes only.", 20, 65);
+    doc.setTextColor(0);
+
     doc.setFont("helvetica", "bold");
-    doc.text("Confidence Score:", 20, 70);
+    doc.text("Confidence Score:", 20, 80);
     doc.setFont("helvetica", "normal");
-    doc.text(`${result.confidence_score}%`, 20, 80);
+    doc.text(`${result.confidence_score}%`, 20, 90);
 
     doc.setFont("helvetica", "bold");
     doc.text("Affected Organ:", 20, 95);
@@ -234,6 +242,7 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate, selecte
   return (
     <div className={`disease-main-card ${isTop ? 'top-result' : ''} ${isSelected ? 'selected-for-compare' : ''}`} style={{ position: 'relative' }}>
       {isTop && <div className="top-badge">Top Match</div>}
+      <p className="result-tagline">There is a possibility of {result.disease} based on symptoms.</p>
 
       {/* Compare selection button */}
       {onToggleSelection && (
@@ -438,11 +447,14 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate, selecte
 };
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
-const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, setResults, navigate }) => {
+const Dashboard = ({ query, setQuery, handleSearch, symptomDuration, setSymptomDuration, loading, error, results, setResults, navigate }) => {
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const [selectedDiseases, setSelectedDiseases] = useState([]);
-  const [history, setHistory]                   = useState([]);
+  const [history, setHistory] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Load history from localStorage on mount and whenever results change
   useEffect(() => { setHistory(loadHistory()); }, [results]);
@@ -517,6 +529,39 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
     recognition.start();
   };
 
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (dropdownOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [dropdownOpen]);
+
+  const durationOptions = [
+    '1-2 days',
+    '3-5 days',
+    'More than 5 days'
+  ];
+
+  const handleDurationClick = (value) => {
+    setSymptomDuration(value);
+    setDropdownOpen(false);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!symptomDuration) {
+      setToastMessage('Please select the duration for better prediction');
+      setTimeout(() => setToastMessage(''), 3200);
+      setDropdownOpen(false);
+      return;
+    }
+    handleSearch(e);
+  };
+
   return (
     <>
       {/* Hero */}
@@ -527,7 +572,7 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
 
       {/* Search box */}
       <div className="search-container">
-        <form onSubmit={handleSearch}>
+        <form onSubmit={handleSubmit}>
           <div className="search-box">
             <Search className="search-icon" size={24} color="var(--text-muted)" />
             <input
@@ -539,30 +584,48 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
+            <div className="duration-picker-wrapper" ref={dropdownRef}>
+              <button
+                type="button"
+                className="duration-picker-btn"
+                onClick={() => setDropdownOpen(prev => !prev)}
+                aria-expanded={dropdownOpen}
+                aria-label={symptomDuration ? `Selected duration ${symptomDuration}` : 'Select duration'}
+                title={symptomDuration ? symptomDuration : 'Select duration'}
+              >
+                <ChevronDown size={18} />
+              </button>
+
+              {dropdownOpen && (
+                <div className="duration-panel">
+                  <div className="duration-panel-title">Duration of Symptoms</div>
+                  {durationOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`duration-option${symptomDuration === option ? ' selected' : ''}`}
+                      onClick={() => handleDurationClick(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button 
               type="button" 
               onClick={startListening} 
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                cursor: 'pointer', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                padding: '0 10px',
-                marginRight: '10px',
-                color: isListening ? '#ef4444' : 'var(--text-muted)',
-                animation: isListening ? 'pulse 1.5s infinite' : 'none'
-              }}
+              className="voice-button"
               title="Speak Symptoms"
             >
               {isListening ? <MicOff size={24} /> : <Mic size={24} />}
             </button>
-            <button type="submit" className="search-btn" disabled={loading} style={{ fontSize: '1.1rem' }}>
+            <button type="submit" className="search-btn" disabled={loading}>
               {loading ? 'Analyzing...' : 'Analyze'}
             </button>
           </div>
         </form>
+        {toastMessage && <div className="toast-message">{toastMessage}</div>}
 
         {/* ── Patient History ─────────────────────────────────────────────── */}
         <div style={{ marginTop: '1.5rem', width: '100%', maxWidth: '800px', marginInline: 'auto' }}>
@@ -655,7 +718,8 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
 
       {/* Results */}
       {results && (Array.isArray(results) ? results.length > 0 : Object.keys(results).length > 0) && (
-        <div className="content-layout" style={{ position: 'relative' }}>
+        <>
+          <div className="content-layout" style={{ position: 'relative' }}>
 
           {/* ── Floating Compare Bar ────────────────────────────────────────── */}
           {selectedDiseases.length > 0 && (
@@ -708,6 +772,7 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
             />
           </div>
         </div>
+        </>
       )}
 
       {/* No results */}
