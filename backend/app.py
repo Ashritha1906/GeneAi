@@ -13,21 +13,44 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 
 print(f"DEBUG: GROQ_API_KEY present: {'Yes' if GROQ_API_KEY else 'No'}")
+print(f"DEBUG: GEMINI_API_KEY present: {'Yes' if GEMINI_API_KEY else 'No'}")
+print(f"DEBUG: OPENAI_API_KEY present: {'Yes' if OPENAI_API_KEY else 'No'}")
 
-# Initialize Groq Client
-client = None
+# Initialize Clients
+groq_client = None
 if GROQ_API_KEY:
     try:
-        client = Groq(api_key=GROQ_API_KEY)
+        groq_client = Groq(api_key=GROQ_API_KEY)
         print("DEBUG: Groq client initialized.")
     except Exception as e:
         print(f"ERROR: Groq initialization failed: {e}")
 
-if not GROQ_API_KEY:
-    print("CRITICAL: No Groq API Key found in .env file. AI Assistant will be unavailable.")
+gemini_client = None
+if GEMINI_API_KEY:
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        gemini_client = genai
+        print("DEBUG: Gemini client initialized.")
+    except Exception as e:
+        print(f"ERROR: Gemini initialization failed: {e}")
+
+openai_client = None
+if OPENAI_API_KEY:
+    try:
+        import openai
+        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        print("DEBUG: OpenAI client initialized.")
+    except Exception as e:
+        print(f"ERROR: OpenAI initialization failed: {e}")
+
+if not GROQ_API_KEY and not GEMINI_API_KEY and not OPENAI_API_KEY:
+    print("CRITICAL: No Groq, Gemini, or OpenAI API Key found in .env file. AI Assistant will use offline mode.")
 
 SYSTEM_PROMPT = (
     "You are a medical assistant for a bioinformatics project. "
@@ -152,83 +175,268 @@ def parse_groq_response(response):
 
     return None
 
-def call_groq_chat(user_message, disease_context):
-    if not client:
-        raise RuntimeError('Groq client not initialized')
-
+def call_llm_chat(user_message, disease_context):
     prompt = normalize_text(user_message)
     if not prompt:
         raise ValueError('Empty user message')
 
-    if hasattr(client, 'chat'):
-        return client.chat.completions.create(
-            model='llama3-8b-8192',
-            messages=[
-                {'role': 'system', 'content': SYSTEM_PROMPT},
-                {'role': 'user', 'content': prompt}
-            ],
-            max_tokens=180,
-            temperature=0.7,
-            timeout=20
-        )
+    system_prompt = SYSTEM_PROMPT
+    if disease_context and disease_context.lower() != 'general medical query':
+        system_prompt += f" The current disease context is: {disease_context}."
 
-    if hasattr(client, 'responses'):
-        return client.responses.create(
-            model='llama3-8b-8192',
-            input=prompt,
-            max_output_tokens=180,
-            temperature=0.7,
-            timeout=20
-        )
+    # 1. Try Groq SDK
+    if groq_client:
+        try:
+            print("DEBUG: Attempting Groq via SDK...")
+            if hasattr(groq_client, 'chat'):
+                response = groq_client.chat.completions.create(
+                    model='llama-3.3-70b-versatile',
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    max_tokens=180,
+                    temperature=0.7,
+                    timeout=20
+                )
+                res = parse_groq_response(response)
+                if res and str(res).strip():
+                    return res
+        except Exception as e:
+            print(f"ERROR: Groq SDK call failed: {e}")
 
-    raise RuntimeError('Groq client does not expose chat or responses API')
+    # 2. Try Groq via HTTP requests (direct fallback)
+    if GROQ_API_KEY:
+        try:
+            print("DEBUG: Attempting Groq via direct HTTP requests...")
+            headers = {
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 180,
+                "temperature": 0.7
+            }
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'choices' in res_json and len(res_json['choices']) > 0:
+                    text = res_json['choices'][0]['message']['content']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: Groq HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: Groq HTTP requests call failed: {e}")
+
+    # 3. Try Gemini via HTTP requests (highly reliable, no SDK version conflict)
+    if GEMINI_API_KEY:
+        try:
+            print("DEBUG: Attempting Gemini via direct HTTP requests...")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            full_prompt = f"{system_prompt}\n\nUser Question: {prompt}"
+            payload = {
+                "contents": [{
+                    "parts": [{"text": full_prompt}]
+                }],
+                "generationConfig": {
+                    "maxOutputTokens": 180,
+                    "temperature": 0.7
+                }
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'candidates' in res_json and len(res_json['candidates']) > 0:
+                    text = res_json['candidates'][0]['content']['parts'][0]['text']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: Gemini HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: Gemini HTTP requests call failed: {e}")
+
+    # 4. Try Gemini SDK
+    if gemini_client:
+        try:
+            print("DEBUG: Attempting Gemini via SDK...")
+            model = gemini_client.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(
+                f"{system_prompt}\n\nUser Question: {prompt}",
+                generation_config={"max_output_tokens": 180, "temperature": 0.7}
+            )
+            if response.text and str(response.text).strip():
+                return response.text
+        except Exception as e:
+            print(f"ERROR: Gemini SDK call failed: {e}")
+
+    # 5. Try OpenAI via HTTP requests
+    if OPENAI_API_KEY:
+        try:
+            print("DEBUG: Attempting OpenAI via direct HTTP requests...")
+            headers = {
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 180,
+                "temperature": 0.7
+            }
+            res = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'choices' in res_json and len(res_json['choices']) > 0:
+                    text = res_json['choices'][0]['message']['content']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: OpenAI HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: OpenAI HTTP requests call failed: {e}")
+
+    # 6. Try OpenAI SDK
+    if openai_client:
+        try:
+            print("DEBUG: Attempting OpenAI via SDK...")
+            response = openai_client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[
+                    {'role': 'system', 'content': system_prompt},
+                    {'role': 'user', 'content': prompt}
+                ],
+                max_tokens=180,
+                temperature=0.7,
+                timeout=20
+            )
+            res = response.choices[0].message.content
+            if res and str(res).strip():
+                return res
+        except Exception as e:
+            print(f"ERROR: OpenAI SDK call failed: {e}")
+
+    raise RuntimeError('No LLM client or API key is available or all LLM API calls failed')
 
 def generate_local_chat_response(user_message, disease_context):
     text = normalize_text(user_message)
     lower = text.lower()
-    disease_name = extract_disease_name(text)
-    has_context = normalize_text(disease_context) and disease_context.lower() != 'general medical query'
-    context_disease = disease_name or (normalize_text(disease_context) if has_context else None)
 
-    if context_disease:
-        details = get_disease_details_if_available(context_disease)
-        if details:
-            description = normalize_text(details.get('description', 'Description not available.'))
-            causes = normalize_text(details.get('causes', ''))
-            prevention = normalize_text(details.get('prevention', ''))
-            progression = details.get('progression') or {}
-            if lower.startswith('what is') or 'about' in lower:
-                return f'{context_disease} is a medical condition. {description}'
-            if any(k in lower for k in ['serious', 'dangerous', 'risk', 'severity', 'life-threatening']):
-                severity = normalize_text(progression.get('early', '') if isinstance(progression, dict) else '') or causes or description
-                return f'{context_disease} can vary in severity. {severity or "Consult a healthcare professional for an accurate assessment."}'
-            if any(k in lower for k in ['symptom', 'sign', 'manifest', 'feature']):
-                symptom_text = predictor.symptom_mapping.get(context_disease.lower(), '') if hasattr(predictor, 'symptom_mapping') else ''
-                if symptom_text:
-                    return f'Common symptoms for {context_disease} include {symptom_text}. Please consult a healthcare professional for confirmation.'
-                return f'Symptoms for {context_disease} vary. Please seek medical guidance.'
-            if any(k in lower for k in ['treatment', 'manage', 'care', 'recover']):
-                return f'Treatment for {context_disease} depends on the condition. {prevention or description or "Consult a physician for proper guidance."}'
-            return description or f'I have data on {context_disease}, but please ask a more specific question.'
-
+    # 1. Check if the user is asking about a general term
     general_map = {
-        'what is dna': 'DNA is the genetic material that stores instructions for life. It is made of nucleotides arranged in a double helix.',
-        'what is gene': 'A gene is a segment of DNA that contains instructions for building a specific protein or function in the body.',
-        'what is genome': 'The genome is the full set of genetic material in an organism, including all its genes and non-coding sequences.',
-        'what is mutation': 'A mutation is a change in DNA sequence, and it can affect how genes work; some are harmless while others can cause disease.',
-        'what is blood': 'Blood carries oxygen, nutrients, and immune cells through the body, supporting every organ and tissue.',
-        'what is symptom': 'A symptom is a sign or sensation that indicates a person may have a medical condition.',
-        'what is a disease': 'A disease is a condition that affects normal body function, often causing symptoms and requiring treatment.'
+        'dna': 'DNA is the genetic material that stores instructions for life. It is made of nucleotides arranged in a double helix.',
+        'gene': 'A gene is a segment of DNA that contains instructions for building a specific protein or function in the body.',
+        'genome': 'The genome is the full set of genetic material in an organism, including all its genes and non-coding sequences.',
+        'mutation': 'A mutation is a change in DNA sequence, and it can affect how genes work; some are harmless while others can cause disease.',
+        'blood': 'Blood carries oxygen, nutrients, and immune cells through the body, supporting every organ and tissue.',
+        'symptom': 'A symptom is a sign or sensation that indicates a person may have a medical condition.',
+        'disease': 'A disease is a condition that affects normal body function, often causing symptoms and requiring treatment.'
     }
 
-    for key, value in general_map.items():
-        if key in lower:
-            return value
+    for term, response in general_map.items():
+        if re.search(rf"\b{term}s?\b", lower):
+            if any(q in lower for q in ['what', 'tell', 'define', 'explain', 'about', 'mean', 'describe']):
+                return response
 
-    if 'what is' in lower or 'tell me about' in lower or 'define' in lower:
-        return 'I can answer medical and genomic questions. Please specify a disease or genetic term for a more detailed response.'
+    # 2. Identify which disease is being referenced
+    matched_disease = None
+    best_score = 0
+    for disease in predictor.disease_info.keys():
+        disease_clean = disease.replace('_', ' ')
+        score = 0
+        
+        if disease_clean in lower:
+            score += 10
+            
+        parts = disease_clean.split()
+        if len(parts) > 1:
+            for part in parts:
+                if len(part) > 3 and re.search(rf"\b{re.escape(part)}\b", lower):
+                    score += 2
+                    
+        symptom_str = predictor.symptom_mapping.get(disease, "")
+        if symptom_str:
+            matched_symptoms = [s for s in symptom_str.split() if len(s) > 3 and re.search(rf"\b{re.escape(s)}\b", lower)]
+            score += len(matched_symptoms) * 0.5
+            
+        if score > best_score and score >= 2:
+            best_score = score
+            matched_disease = disease
 
-    return 'AI assistant is currently unavailable. Please try again.'
+    # 3. Fallback to disease context if no disease matches the query keywords
+    has_context = normalize_text(disease_context) and disease_context.lower() != 'general medical query'
+    
+    # Clean up generic names extracted by extract_disease_name
+    disease_name = extract_disease_name(text)
+    if disease_name.lower() in ['it', 'this', 'this disease', 'the disease', 'disease', 'condition', 'the condition', 'this condition']:
+        disease_name = ''
+        
+    context_disease = matched_disease or disease_name or (normalize_text(disease_context) if has_context else None)
+
+    if context_disease:
+        disease_key = context_disease.lower().strip()
+        details = None
+        for k in predictor.disease_info.keys():
+            if k.lower() == disease_key or k.lower().replace('_', ' ') == disease_key.replace('_', ' '):
+                details = predictor.disease_info[k]
+                disease_key = k
+                break
+                
+        if details:
+            description = normalize_text(details.get('description', 'Description not available.'))
+            causes = normalize_text(details.get('causes', 'Causes not specified.'))
+            prevention = normalize_text(details.get('prevention', 'Prevention not specified.'))
+            progression = details.get('progression') or predictor.progression_map.get(disease_key) or {}
+            
+            prog_str = ""
+            if isinstance(progression, dict):
+                prog_str = " ".join(f"{k.title()}: {v}." for k, v in progression.items())
+            else:
+                prog_str = str(progression)
+
+            doctor_rec = predictor.doctor_map.get(disease_key, "a General Physician")
+            symptoms = predictor.symptom_mapping.get(disease_key, "")
+
+            # Match user intent based on keywords
+            if any(k in lower for k in ['cause', 'why', 'reason', 'genetics', 'inherited', 'genetic', 'mutation', 'source']):
+                return f"The causes of {disease_key.replace('_', ' ').title()} are: {causes}"
+                
+            if any(k in lower for k in ['prevent', 'avoid', 'reduce risk', 'stop', 'precautions']):
+                return f"To prevent or manage {disease_key.replace('_', ' ').title()}: {prevention}"
+                
+            if any(k in lower for k in ['symptom', 'sign', 'feel like', 'indicator', 'manifest', 'feature', 'detect']):
+                if symptoms:
+                    return f"Common symptoms of {disease_key.replace('_', ' ').title()} include: {symptoms.replace(' ', ', ')}. Please consult a medical professional for confirmation."
+                return f"Symptoms for {disease_key.replace('_', ' ').title()} can vary. Please seek medical guidance."
+                
+            if any(k in lower for k in ['treatment', 'manage', 'cure', 'recover', 'care', 'therapy', 'heal']):
+                return f"Management and treatment of {disease_key.replace('_', ' ').title()}: {prevention} It is advised to consult a {doctor_rec}."
+                
+            if any(k in lower for k in ['serious', 'dangerous', 'risk', 'severity', 'life-threatening', 'deadly', 'fatal', 'progression', 'stage', 'worst']):
+                severity_desc = prog_str or description
+                return f"{disease_key.replace('_', ' ').title()} can vary in severity. {severity_desc}"
+                
+            if any(k in lower for k in ['doctor', 'specialist', 'who to see', 'hospital', 'physician', 'consult', 'recommendation']):
+                return f"For {disease_key.replace('_', ' ').title()}, it is highly recommended to consult a specialist such as a {doctor_rec}."
+
+            return f"{disease_key.replace('_', ' ').title()} is a medical condition. {description}"
+
+    for term, response in general_map.items():
+        if term in lower:
+            return response
+
+    return "I can answer medical and genomic questions. Please specify a disease, symptom, or genetic term for a detailed response."
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
@@ -438,7 +646,8 @@ def chat():
         }), 400
 
     user_message = normalize_text(data['message'])
-    print(f"DEBUG: User message: '{user_message[:200]}'")
+    disease_context = normalize_text(data.get('context', ''))
+    print(f"DEBUG: User message: '{user_message[:200]}', Context: '{disease_context}'")
 
     if not user_message:
         return jsonify({
@@ -447,20 +656,18 @@ def chat():
         }), 400
 
     try:
-        print("DEBUG: Attempting Groq API...")
-        response = call_groq_chat(user_message, '')
-        print("DEBUG: Raw Groq response:", response)
-        ai_response = parse_groq_response(response)
+        print("DEBUG: Attempting LLM API call...")
+        ai_response = call_llm_chat(user_message, disease_context)
 
         if not ai_response or not str(ai_response).strip():
-            raise ValueError('No valid response returned from Groq API')
+            raise ValueError('No valid response returned from LLM API')
 
         ai_response = str(ai_response).strip()
         print(f"DEBUG: AI response: {ai_response[:300]}")
         return jsonify(make_language_safe_recursive({"response": ai_response}))
     except Exception as e:
-        print(f"ERROR: Groq API call failed: {str(e)}")
-        local_reply = generate_local_chat_response(user_message, '')
+        print(f"ERROR: LLM API call failed: {str(e)}")
+        local_reply = generate_local_chat_response(user_message, disease_context)
         print(f"DEBUG: Local fallback response: {local_reply}")
         return jsonify(make_language_safe_recursive({"response": local_reply, "error": str(e)})), 200
 

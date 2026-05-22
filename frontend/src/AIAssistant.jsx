@@ -118,7 +118,8 @@ const AIAssistant = ({ currentDisease }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userText
+          message: userText,
+          context: getContext()?.disease || 'General medical query'
         }),
         mode: "cors",
       });
