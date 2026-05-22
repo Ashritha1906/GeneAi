@@ -102,7 +102,7 @@ const DiseaseDetailsPage = () => {
       </button>
 
       <div className="details-header" style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{diseaseName}</h1>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>There is a possibility of {diseaseName} based on symptoms</h1>
         <p style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Database size={18} /> Verified Clinical & Genomic Report
         </p>

@@ -1,0 +1,17 @@
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Python runtime / compiler files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# Node modules (for backend dependencies)
+node_modules/

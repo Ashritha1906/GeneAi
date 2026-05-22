@@ -101,33 +101,17 @@ export default function DiseaseBrowser() {
   const safe = (v) => { if (v === null || v === undefined) return 'N/A'; if (typeof v === 'object') return v.value || JSON.stringify(v); return String(v); };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: 'var(--bg, #f8fafc)' }}>
+    <div className="browser-container">
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
-      <div style={{
-        width: sidebarOpen ? '220px' : '40px',
-        minWidth: sidebarOpen ? '220px' : '40px',
-        background: '#fff',
-        borderRight: '1px solid #d0d7de',
-        overflowY: sidebarOpen ? 'auto' : 'hidden',
-        overflowX: 'hidden',
-        transition: 'width 0.3s ease, min-width 0.3s ease',
-        flexShrink: 0,
-        boxShadow: '2px 0 6px rgba(0,0,0,0.04)',
-        position: 'relative'
-      }}>
+      <div className={`browser-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
 
         {/* Collapsed strip — visible when sidebar is closed */}
         {!sidebarOpen && (
           <div
             onClick={() => setSidebarOpen(true)}
             title="Open Disease Library"
-            style={{
-              width: '40px', height: '100%', minHeight: '100vh',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              paddingTop: '20px', gap: '6px', cursor: 'pointer',
-              background: '#f6f8fa'
-            }}
+            className="sidebar-toggle-strip"
           >
             <div style={{ width: '20px', height: '2px', background: '#57606a', borderRadius: '2px' }} />
             <div style={{ width: '20px', height: '2px', background: '#57606a', borderRadius: '2px' }} />
@@ -195,7 +179,7 @@ export default function DiseaseBrowser() {
       </div>
 
       {/* ── Main Content ─────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+      <div className="browser-main-content">
         {/* Top nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
           <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: 'var(--accent,#0ea5e9)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem', padding: '0' }}>
@@ -225,16 +209,16 @@ export default function DiseaseBrowser() {
           <div style={{ maxWidth: '900px' }}>
 
             {/* ── 1. Header ── */}
-            <div style={{ background: 'linear-gradient(135deg, #004a99, #0ea5e9)', borderRadius: '20px', padding: '32px', color: '#fff', marginBottom: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div className="browser-header-banner">
+              <div className="browser-header-flex">
                 <div>
                   <p style={{ margin: '0 0 6px', fontSize: '0.85rem', opacity: 0.8, letterSpacing: '1px', textTransform: 'uppercase' }}>{DISEASE_TAGLINES[selected] || 'Genetic Condition'}</p>
-                  <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '900' }}>{selected}</h1>
+                  <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '900' }}>There is a possibility of {selected} based on symptoms</h1>
                   <p style={{ margin: '10px 0 0', opacity: 0.9, fontSize: '0.92rem', lineHeight: 1.65, maxWidth: '560px' }}>
                     {(KEY_FACTS[selected] || ['A genetic condition requiring specialist care.']).join('. ')}.
                   </p>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                <div className="browser-header-meta">
                   <span style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '20px', padding: '4px 16px', fontSize: '0.85rem', fontWeight: '700' }}>
                     Risk: {RISK_MAP[selected] || 'Variable'}
                   </span>
@@ -246,7 +230,7 @@ export default function DiseaseBrowser() {
             </div>
 
             {/* ── 2. Quick Info Row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+            <div className="quick-info-grid">
               {[
                 { label: 'Affected Organ', value: data.affected_organ, icon: <Activity size={18} /> },
                 { label: 'Recommended Doctor', value: data.doctor_recommendation, icon: <UserCheck size={18} /> },
@@ -274,7 +258,7 @@ export default function DiseaseBrowser() {
             )}
 
             {/* ── 4. Causes & Prevention ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div className="causes-prevention-grid">
               <div className="info-section-box">
                 <div className="section-box-title"><ShieldCheck size={18} /> Causes</div>
                 <p style={{ fontSize: '0.95rem', lineHeight: 1.6, marginTop: '8px' }}>{data.causes}</p>

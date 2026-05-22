@@ -148,8 +148,8 @@ const PrevalenceMap = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--secondary)', borderRadius: '12px', padding: '20px', border: '1px solid var(--border)', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: '20px', right: '20px', background: 'var(--secondary)', padding: '12px 18px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', boxShadow: 'var(--shadow)', zIndex: 10 }}>
+              <div className="map-wrapper">
+                <div className="map-legend">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '4px' }}>
                     <span>Map Legend</span>
                   </div>
@@ -178,7 +178,7 @@ const PrevalenceMap = () => {
                 <ComposableMap
                   projection="geoMercator"
                   projectionConfig={{ scale: 1000, center: [80, 22] }}
-                  style={{ width: "100%", height: "600px", maxWidth: "800px" }}
+                  className="map-svg"
                 >
                   <Geographies geography={indiaGeo}>
                     {({ geographies }) =>

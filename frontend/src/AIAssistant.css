@@ -244,3 +244,19 @@
   background: var(--border);
   border-radius: 10px;
 }
+
+/* ── Mobile Responsiveness (max-width: 768px) ─────────────────── */
+@media (max-width: 768px) {
+  .ai-assistant-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    align-items: flex-end;
+  }
+
+  .ai-chat-window {
+    width: 100%;
+    max-height: calc(100vh - 120px);
+    margin-bottom: 0.5rem;
+  }
+}

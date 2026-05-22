@@ -13,6 +13,7 @@ import {
   RefreshCw,
   FlaskConical,
   ChevronRight,
+  ChevronDown,
   FileText,
   Layers,
   Loader2,
@@ -60,9 +61,28 @@ function App() {
   const [results, setResults] = useState(null)
   const [error,   setError]   = useState(null)
 
+  // Symptom duration state (Frontend Only)
+  const [selectedDuration, setSelectedDuration] = useState('')
+  const [showDurationPanel, setShowDurationPanel] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  const showToast = (message) => {
+    setToast(message)
+    setTimeout(() => {
+      setToast(null)
+    }, 3000)
+  }
+
   const handleSearch = async (e) => {
     if (e) e.preventDefault()
     if (!query.trim()) return
+
+    // Symptom duration validation
+    if (!selectedDuration) {
+      showToast("Please select the duration for better prediction")
+      return
+    }
+
     setLoading(true); setError(null); setResults(null)
     try {
       const response = await axios.post('http://localhost:5000/predict', { symptoms: query })
@@ -79,6 +99,14 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Floating Validation Toast */}
+      {toast && (
+        <div className="custom-toast">
+          <AlertCircle size={20} />
+          <span>{toast}</span>
+        </div>
+      )}
+
       <header className="header">
         <div className="logo">
           <Stethoscope size={28} />
@@ -101,6 +129,10 @@ function App() {
               loading={loading} error={error}
               results={results} setResults={setResults}
               navigate={navigate}
+              selectedDuration={selectedDuration}
+              setSelectedDuration={setSelectedDuration}
+              showDurationPanel={showDurationPanel}
+              setShowDurationPanel={setShowDurationPanel}
             />
           } />
           <Route path="/more-details/:diseaseName" element={<DiseaseDetailsPage />} />
@@ -426,7 +458,10 @@ const RenderDiseaseCard = ({ result, isTop = false, index = 0, navigate, selecte
 };
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
-const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, setResults, navigate }) => {
+const Dashboard = ({ 
+  query, setQuery, handleSearch, loading, error, results, setResults, navigate,
+  selectedDuration, setSelectedDuration, showDurationPanel, setShowDurationPanel
+}) => {
   const inputRef = useRef(null);
   const [isListening, setIsListening] = useState(false);
   const [selectedDiseases, setSelectedDiseases] = useState([]);
@@ -527,6 +562,30 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
+            
+            {/* Toggle Button for Symptom Duration */}
+            <button
+              type="button"
+              onClick={() => setShowDurationPanel(!showDurationPanel)}
+              className={`duration-toggle-btn ${showDurationPanel ? 'active' : ''} ${selectedDuration ? 'has-value' : ''}`}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 10px',
+                marginRight: '5px',
+                color: selectedDuration ? 'var(--accent)' : 'var(--text-muted)',
+                transition: 'transform 0.3s ease, color 0.3s ease',
+                transform: showDurationPanel ? 'rotate(180deg)' : 'none'
+              }}
+              title="Select Symptom Duration"
+            >
+              <ChevronDown size={24} />
+            </button>
+
             <button 
               type="button" 
               onClick={startListening} 
@@ -550,6 +609,36 @@ const Dashboard = ({ query, setQuery, handleSearch, loading, error, results, set
               {loading ? 'Analyzing...' : 'Analyze'}
             </button>
           </div>
+
+          {/* Symptom Duration Selection Panel */}
+          {showDurationPanel && (
+            <div className="duration-panel">
+              <span className="duration-label">Duration of Symptoms</span>
+              <div className="duration-options">
+                {[
+                  { label: '1–2 days', value: '1-2 days' },
+                  { label: '3–5 days', value: '3-5 days' },
+                  { label: 'More than 5 days', value: 'More than 5 days' }
+                ].map((opt) => (
+                  <label 
+                    key={opt.value} 
+                    className={`duration-radio-label ${selectedDuration === opt.value ? 'selected' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="symptom-duration"
+                      value={opt.value}
+                      checked={selectedDuration === opt.value}
+                      onChange={(e) => setSelectedDuration(e.target.value)}
+                      style={{ display: 'none' }}
+                    />
+                    <div className="custom-radio-indicator" />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </form>
 
         {/* ── Patient History ─────────────────────────────────────────────── */}

@@ -9,7 +9,7 @@ from groq import Groq
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
@@ -34,8 +34,53 @@ if not GROQ_API_KEY:
 
 BASE_INSTRUCTIONS = (
     "Provide the direct, correct answer to the user's question. "
-    "Do NOT give lengthy or detailed explanations. Keep your answers extremely concise, short, and to the point (maximum 1-3 sentences)."
+    "Do NOT give lengthy or detailed explanations. Keep your answers extremely concise, short, and to the point (maximum 1-3 sentences). "
+    "If discussing a potential condition, never state that the user has the disease (do not say 'You have [disease]' or 'You suffer from [disease]'). "
+    "Instead, use non-alarming phrasing like 'There is a possibility of [disease] based on symptoms'. "
+    "Do NOT include disclaimer phrases like 'not a confirmed diagnosis' or 'this is not a medical diagnosis'."
 )
+
+import re
+
+def make_language_safe(text):
+    if not isinstance(text, str):
+        return text
+    
+    # List of known diseases for matching
+    diseases_pattern = r"(thalassemia|sickle cell disease|sickle cell anemia|sickle_cell|glucose-6-phosphate dehydrogenase deficiency|g6pd|breast cancer|breast_cancer|parkinson's disease|parkinsons|hemophilia|familial hypercholesterolemia|fh|cystic fibrosis|cystic_fibrosis|hypertrophic cardiomyopathy|hcm|hereditary anemia|hereditary_anemia)"
+    
+    # 1. Replace specific alarming patterns with safe option
+    text = re.sub(
+        rf"(?i)\byou\s+(?:have|suffer\s+from|are\s+diagnosed\s+with)\s+{diseases_pattern}\b",
+        lambda m: f"There is a possibility of {m.group(1)} based on symptoms",
+        text
+    )
+    
+    # 2. General backup for other phrases
+    text = re.sub(
+        r"(?i)\byou\s+(?:have|suffer\s+from|are\s+diagnosed\s+with)\s+([a-zA-Z0-9' -]+?)(?=\.|\,|\;|\!|\?|\band\b|\bbut\b|\bor\b|$)",
+        lambda m: f"There is a possibility of {m.group(1)} based on symptoms" if len(m.group(1).split()) <= 4 else m.group(0),
+        text
+    )
+    
+    # 3. Completely avoid "not a confirmed diagnosis" or similar phrases
+    text = re.sub(r"(?i)\b(?:this is\s+)?not a (?:confirmed|definitive|final|actual) diagnosis\b\.?", "", text)
+    text = re.sub(r"(?i)\bnot a confirmed diagnosis\b\.?", "", text)
+    text = re.sub(r"(?i)\bnot a definitive diagnosis\b\.?", "", text)
+    
+    # Clean up spacing and punctuation
+    text = re.sub(r'\s*\.\s*\.', '.', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def make_language_safe_recursive(data):
+    if isinstance(data, dict):
+        return {k: make_language_safe_recursive(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [make_language_safe_recursive(x) for x in data]
+    elif isinstance(data, str):
+        return make_language_safe(data)
+    return data
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
@@ -78,7 +123,7 @@ def predict_disease():
     print(f"Prediction request: {user_input}")
     top_n = data.get('limit', 3)
     results = predictor.predict(user_input, top_n=top_n)
-    return jsonify(results)
+    return jsonify(make_language_safe_recursive(results))
 
 @app.route('/disease-details', methods=['GET'])
 def disease_details():
@@ -86,7 +131,7 @@ def disease_details():
     if not disease_name:
         return jsonify({"error": "Please provide a disease 'name'"}), 400
     details = predictor.get_disease_details(disease_name)
-    return jsonify(details)
+    return jsonify(make_language_safe_recursive(details))
 
 @app.route('/get-all-diseases', methods=['GET'])
 def get_all_diseases():
@@ -100,7 +145,7 @@ def get_disease():
         return jsonify({"error": "Please provide a disease 'name'"}), 400
     details = predictor.get_disease_by_name(disease_name)
     if details:
-        return jsonify(details)
+        return jsonify(make_language_safe_recursive(details))
     return jsonify({"error": "Disease not found"}), 404
 
 def deduplicate(records, keys):
@@ -137,11 +182,12 @@ def more_details():
     if not data:
         return jsonify({"genes": [], "variants": [], "conditions": []})
 
-    return jsonify({
+    res = {
         "genes":      deduplicate(data.get("genes",      []), ["gene", "omim"]),
         "variants":   deduplicate(data.get("variants",   []), ["variation", "protein_change", "consequence"]),
         "conditions": deduplicate(data.get("conditions", []), ["condition", "classification", "review_status"])
-    })
+    }
+    return jsonify(make_language_safe_recursive(res))
 
 @app.route('/disease-full', methods=['GET'])
 def disease_full():
@@ -188,7 +234,51 @@ def disease_full():
         "variants":            deduplicate(ncbi_data.get("variants", []),   ["variation", "protein_change", "consequence"]),
         "conditions":          deduplicate(ncbi_data.get("conditions", []), ["condition", "classification", "review_status"]),
     }
-    return jsonify(result)
+    return jsonify(make_language_safe_recursive(result))
+
+def generate_fallback_response(user_message, disease_context):
+    msg_lower = user_message.lower()
+    disease_name = disease_context if disease_context and disease_context != 'General medical query' else None
+    
+    if not disease_name:
+        if "what is " in msg_lower:
+            disease_name = msg_lower.split("what is ")[-1].strip("? .")
+    
+    if not disease_name:
+        return "I am currently running in offline mode. Please ask a specific question about a disease."
+
+    ml_data = predictor.get_disease_by_name(disease_name)
+    if not ml_data:
+        ml_data = predictor.get_disease_details(disease_name)
+
+    if not ml_data:
+        return f"I am running in offline mode and couldn't find detailed information about '{disease_name}'."
+
+    if "what is" in msg_lower or "describe" in msg_lower or "definition" in msg_lower:
+        desc = ml_data.get("description", "No description available.")
+        return f"{disease_name.title()} is described as: {desc}"
+    elif "serious" in msg_lower or "progression" in msg_lower or "dangerous" in msg_lower:
+        prog = ml_data.get("progression", "Information about disease progression is not available.")
+        if isinstance(prog, dict):
+            prog_str = ", ".join(f"{k.title()}: {v}" for k, v in prog.items())
+            return f"Regarding seriousness and progression: {prog_str}"
+        return f"Regarding seriousness and progression: {prog}"
+    elif "cause" in msg_lower or "why" in msg_lower:
+        causes = ml_data.get("causes", "Causes are not specified.")
+        return f"The common causes are: {causes}"
+    elif "prevent" in msg_lower or "avoid" in msg_lower:
+        prev = ml_data.get("prevention", "Prevention measures are not specified.")
+        return f"To prevent this, you can: {prev}"
+    elif "doctor" in msg_lower or "specialist" in msg_lower or "who to see" in msg_lower:
+        doc = ml_data.get("doctor_recommendation", "A General Physician is recommended.")
+        return f"It is recommended to see: {doc}"
+    elif "symptom" in msg_lower or "sign" in msg_lower:
+        symp = predictor.symptom_mapping.get(disease_name.lower().strip(), "")
+        if symp:
+            return f"Common symptoms include: {symp.replace(' ', ', ')}."
+        return "Symptom information is not available."
+    else:
+        return f"I'm operating in offline fallback mode. I know about {disease_name.title()}. Try asking what it is, if it's serious, its causes, or prevention."
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -218,7 +308,7 @@ def chat():
         try:
             print("DEBUG: Attempting Groq API...")
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile", # fallback from decommissioned llama3-8b-8192
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": dynamic_system_prompt},
                     {"role": "user", "content": user_message}
@@ -233,15 +323,20 @@ def chat():
             print("AI:", ai_response)
             
             print(f"DEBUG: Groq Success. Response length: {len(ai_response)}")
-            return jsonify({"response": ai_response})
+            return jsonify(make_language_safe_recursive({"response": ai_response}))
         except Exception as e:
             print("Groq Error:", e)
-            return jsonify({"response": "AI service temporarily unavailable"}), 503
+            print("Using local fallback response generator due to Groq error.")
+            fallback_resp = generate_fallback_response(user_message, disease_context)
+            return jsonify(make_language_safe_recursive({"response": fallback_resp})), 200
 
-    return jsonify({
-        "response": "AI Assistant is currently unavailable. Please check the backend logs for details.",
-        "error": "Groq client not initialized"
-    }), 503
+    print("Using local fallback response generator because Groq client is not initialized.")
+    fallback_resp = generate_fallback_response(user_message, disease_context)
+    return jsonify(make_language_safe_recursive({"response": fallback_resp})), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+
+
+
