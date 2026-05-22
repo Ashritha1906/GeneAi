@@ -13,21 +13,44 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'), override=True)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY")
 
 print(f"DEBUG: GROQ_API_KEY present: {'Yes' if GROQ_API_KEY else 'No'}")
+print(f"DEBUG: GEMINI_API_KEY present: {'Yes' if GEMINI_API_KEY else 'No'}")
+print(f"DEBUG: OPENAI_API_KEY present: {'Yes' if OPENAI_API_KEY else 'No'}")
 
-# Initialize Groq Client
-client = None
+# Initialize Clients
+groq_client = None
 if GROQ_API_KEY:
     try:
-        client = Groq(api_key=GROQ_API_KEY)
+        groq_client = Groq(api_key=GROQ_API_KEY)
         print("DEBUG: Groq client initialized.")
     except Exception as e:
         print(f"ERROR: Groq initialization failed: {e}")
 
-if not GROQ_API_KEY:
-    print("CRITICAL: No Groq API Key found in .env file. AI Assistant will be unavailable.")
+gemini_client = None
+if GEMINI_API_KEY:
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        gemini_client = genai
+        print("DEBUG: Gemini client initialized.")
+    except Exception as e:
+        print(f"ERROR: Gemini initialization failed: {e}")
+
+openai_client = None
+if OPENAI_API_KEY:
+    try:
+        import openai
+        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        print("DEBUG: OpenAI client initialized.")
+    except Exception as e:
+        print(f"ERROR: OpenAI initialization failed: {e}")
+
+if not GROQ_API_KEY and not GEMINI_API_KEY and not OPENAI_API_KEY:
+    print("CRITICAL: No Groq, Gemini, or OpenAI API Key found in .env file. AI Assistant will use offline mode.")
 
 SYSTEM_PROMPT = (
     "You are a medical assistant for a bioinformatics project. "
@@ -152,10 +175,7 @@ def parse_groq_response(response):
 
     return None
 
-def call_groq_chat(user_message, disease_context):
-    if not client:
-        raise RuntimeError('Groq client not initialized')
-
+def call_llm_chat(user_message, disease_context):
     prompt = normalize_text(user_message)
     if not prompt:
         raise ValueError('Empty user message')
@@ -164,28 +184,150 @@ def call_groq_chat(user_message, disease_context):
     if disease_context and disease_context.lower() != 'general medical query':
         system_prompt += f" The current disease context is: {disease_context}."
 
-    if hasattr(client, 'chat'):
-        return client.chat.completions.create(
-            model='llama3-8b-8192',
-            messages=[
-                {'role': 'system', 'content': system_prompt},
-                {'role': 'user', 'content': prompt}
-            ],
-            max_tokens=180,
-            temperature=0.7,
-            timeout=20
-        )
+    # 1. Try Groq SDK
+    if groq_client:
+        try:
+            print("DEBUG: Attempting Groq via SDK...")
+            if hasattr(groq_client, 'chat'):
+                response = groq_client.chat.completions.create(
+                    model='llama-3.3-70b-versatile',
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    max_tokens=180,
+                    temperature=0.7,
+                    timeout=20
+                )
+                res = parse_groq_response(response)
+                if res and str(res).strip():
+                    return res
+        except Exception as e:
+            print(f"ERROR: Groq SDK call failed: {e}")
 
-    if hasattr(client, 'responses'):
-        return client.responses.create(
-            model='llama3-8b-8192',
-            input=prompt,
-            max_output_tokens=180,
-            temperature=0.7,
-            timeout=20
-        )
+    # 2. Try Groq via HTTP requests (direct fallback)
+    if GROQ_API_KEY:
+        try:
+            print("DEBUG: Attempting Groq via direct HTTP requests...")
+            headers = {
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 180,
+                "temperature": 0.7
+            }
+            res = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'choices' in res_json and len(res_json['choices']) > 0:
+                    text = res_json['choices'][0]['message']['content']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: Groq HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: Groq HTTP requests call failed: {e}")
 
-    raise RuntimeError('Groq client does not expose chat or responses API')
+    # 3. Try Gemini via HTTP requests (highly reliable, no SDK version conflict)
+    if GEMINI_API_KEY:
+        try:
+            print("DEBUG: Attempting Gemini via direct HTTP requests...")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            full_prompt = f"{system_prompt}\n\nUser Question: {prompt}"
+            payload = {
+                "contents": [{
+                    "parts": [{"text": full_prompt}]
+                }],
+                "generationConfig": {
+                    "maxOutputTokens": 180,
+                    "temperature": 0.7
+                }
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'candidates' in res_json and len(res_json['candidates']) > 0:
+                    text = res_json['candidates'][0]['content']['parts'][0]['text']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: Gemini HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: Gemini HTTP requests call failed: {e}")
+
+    # 4. Try Gemini SDK
+    if gemini_client:
+        try:
+            print("DEBUG: Attempting Gemini via SDK...")
+            model = gemini_client.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(
+                f"{system_prompt}\n\nUser Question: {prompt}",
+                generation_config={"max_output_tokens": 180, "temperature": 0.7}
+            )
+            if response.text and str(response.text).strip():
+                return response.text
+        except Exception as e:
+            print(f"ERROR: Gemini SDK call failed: {e}")
+
+    # 5. Try OpenAI via HTTP requests
+    if OPENAI_API_KEY:
+        try:
+            print("DEBUG: Attempting OpenAI via direct HTTP requests...")
+            headers = {
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 180,
+                "temperature": 0.7
+            }
+            res = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=20)
+            if res.status_code == 200:
+                res_json = res.json()
+                if 'choices' in res_json and len(res_json['choices']) > 0:
+                    text = res_json['choices'][0]['message']['content']
+                    if text and str(text).strip():
+                        return text
+            else:
+                print(f"ERROR: OpenAI HTTP returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"ERROR: OpenAI HTTP requests call failed: {e}")
+
+    # 6. Try OpenAI SDK
+    if openai_client:
+        try:
+            print("DEBUG: Attempting OpenAI via SDK...")
+            response = openai_client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[
+                    {'role': 'system', 'content': system_prompt},
+                    {'role': 'user', 'content': prompt}
+                ],
+                max_tokens=180,
+                temperature=0.7,
+                timeout=20
+            )
+            res = response.choices[0].message.content
+            if res and str(res).strip():
+                return res
+        except Exception as e:
+            print(f"ERROR: OpenAI SDK call failed: {e}")
+
+    raise RuntimeError('No LLM client or API key is available or all LLM API calls failed')
 
 def generate_local_chat_response(user_message, disease_context):
     text = normalize_text(user_message)
@@ -514,19 +656,17 @@ def chat():
         }), 400
 
     try:
-        print("DEBUG: Attempting Groq API...")
-        response = call_groq_chat(user_message, disease_context)
-        print("DEBUG: Raw Groq response:", response)
-        ai_response = parse_groq_response(response)
+        print("DEBUG: Attempting LLM API call...")
+        ai_response = call_llm_chat(user_message, disease_context)
 
         if not ai_response or not str(ai_response).strip():
-            raise ValueError('No valid response returned from Groq API')
+            raise ValueError('No valid response returned from LLM API')
 
         ai_response = str(ai_response).strip()
         print(f"DEBUG: AI response: {ai_response[:300]}")
         return jsonify(make_language_safe_recursive({"response": ai_response}))
     except Exception as e:
-        print(f"ERROR: Groq API call failed: {str(e)}")
+        print(f"ERROR: LLM API call failed: {str(e)}")
         local_reply = generate_local_chat_response(user_message, disease_context)
         print(f"DEBUG: Local fallback response: {local_reply}")
         return jsonify(make_language_safe_recursive({"response": local_reply, "error": str(e)})), 200
