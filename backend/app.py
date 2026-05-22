@@ -160,11 +160,15 @@ def call_groq_chat(user_message, disease_context):
     if not prompt:
         raise ValueError('Empty user message')
 
+    system_prompt = SYSTEM_PROMPT
+    if disease_context and disease_context.lower() != 'general medical query':
+        system_prompt += f" The current disease context is: {disease_context}."
+
     if hasattr(client, 'chat'):
         return client.chat.completions.create(
             model='llama3-8b-8192',
             messages=[
-                {'role': 'system', 'content': SYSTEM_PROMPT},
+                {'role': 'system', 'content': system_prompt},
                 {'role': 'user', 'content': prompt}
             ],
             max_tokens=180,
@@ -187,6 +191,8 @@ def generate_local_chat_response(user_message, disease_context):
     text = normalize_text(user_message)
     lower = text.lower()
     disease_name = extract_disease_name(text)
+    if disease_name.lower() in ['it', 'this', 'this disease', 'the disease', 'disease', 'condition', 'the condition', 'this condition']:
+        disease_name = ''
     has_context = normalize_text(disease_context) and disease_context.lower() != 'general medical query'
     context_disease = disease_name or (normalize_text(disease_context) if has_context else None)
 
@@ -438,7 +444,8 @@ def chat():
         }), 400
 
     user_message = normalize_text(data['message'])
-    print(f"DEBUG: User message: '{user_message[:200]}'")
+    disease_context = normalize_text(data.get('context', ''))
+    print(f"DEBUG: User message: '{user_message[:200]}', Context: '{disease_context}'")
 
     if not user_message:
         return jsonify({
@@ -448,7 +455,7 @@ def chat():
 
     try:
         print("DEBUG: Attempting Groq API...")
-        response = call_groq_chat(user_message, '')
+        response = call_groq_chat(user_message, disease_context)
         print("DEBUG: Raw Groq response:", response)
         ai_response = parse_groq_response(response)
 
@@ -460,7 +467,7 @@ def chat():
         return jsonify(make_language_safe_recursive({"response": ai_response}))
     except Exception as e:
         print(f"ERROR: Groq API call failed: {str(e)}")
-        local_reply = generate_local_chat_response(user_message, '')
+        local_reply = generate_local_chat_response(user_message, disease_context)
         print(f"DEBUG: Local fallback response: {local_reply}")
         return jsonify(make_language_safe_recursive({"response": local_reply, "error": str(e)})), 200
 

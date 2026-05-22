@@ -112,13 +112,14 @@ const AIAssistant = ({ currentDisease }) => {
     console.log("Fetching AI Response for:", userText);
     
     try {
-      const response = await fetch("/chat", {
+      const response = await fetch("http://localhost:5000/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: userText
+          message: userText,
+          context: getContext()?.disease || 'General medical query'
         }),
       });
 
