@@ -120,12 +120,23 @@ const AIAssistant = ({ currentDisease }) => {
         body: JSON.stringify({
           message: userText
         }),
+        mode: "cors",
       });
 
-      const data = await response.json();
+      console.log("Chat API HTTP status:", response.status, response.statusText);
+      const data = await response.json().catch((err) => {
+        console.error("Failed to parse chat JSON response", err);
+        return null;
+      });
       console.log("Chat API response:", data);
 
-      const aiReply = data?.response || "AI response not available. Please try again.";
+      if (!response.ok) {
+        const errorMessage = data?.error || `${response.status} ${response.statusText}`;
+        console.error("Chat API returned error:", errorMessage);
+        return `AI response not available. (${errorMessage})`;
+      }
+
+      const aiReply = data?.response || data?.answer || "AI response not available. Please try again.";
       speak(aiReply);
       return aiReply;
     } catch (error) {
