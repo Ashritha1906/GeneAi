@@ -34,6 +34,19 @@ const highlightColors = [
   "#6366f1"  // Indigo
 ];
 
+// Helper to normalize state names for matching (handles punctuation, ampersands, and old name variations)
+const normalizeStateName = (name) => {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/orissa/g, "odisha")
+    .replace(/uttaranchal/g, "uttarakhand")
+    .replace(/pondicherry/g, "puducherry")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+};
+
 const PrevalenceMap = () => {
   const { diseaseName } = useParams();
   const location = useLocation();
@@ -215,14 +228,18 @@ const PrevalenceMap = () => {
                   <Geographies geography={indiaGeo}>
                     {({ geographies }) =>
                       geographies.map((geo) => {
-                        const stateName = geo.properties.NAME_1?.toLowerCase() || geo.properties.name?.toLowerCase() || geo.properties.st_nm?.toLowerCase() || "";
+                        const stateName = geo.properties.ST_NM || geo.properties.st_nm || geo.properties.NAME_1 || geo.properties.name || "";
                         
                         // Check if the state is highlighted
                         let isHighlighted = false;
                         let stateColor = "#e2e8f0"; // Base map state color
                         
                         if (highlightedStates.length > 0) {
-                          const highlightIndex = highlightedStates.findIndex(h => stateName.includes(h) || h.includes(stateName));
+                          const highlightIndex = highlightedStates.findIndex(h => {
+                            const normH = normalizeStateName(h);
+                            const normState = normalizeStateName(stateName);
+                            return normState.includes(normH) || normH.includes(normState);
+                          });
                           if (highlightIndex !== -1) {
                             isHighlighted = true;
                             stateColor = highlightColors[highlightIndex % highlightColors.length];

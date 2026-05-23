@@ -733,29 +733,30 @@ main {
 /* ── Prevalence Map base styles ────────────────────────────────── */
 .map-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
   background: var(--secondary);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--border);
   position: relative;
   width: 100%;
+  gap: 24px;
 }
 
 .map-legend {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  flex-shrink: 0;
+  width: 220px;
   background: var(--secondary);
-  padding: 12px 18px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 0.85rem;
-  box-shadow: var(--shadow);
+  gap: 12px;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-sm);
   z-index: 10;
 }
 

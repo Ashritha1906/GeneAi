@@ -43,7 +43,7 @@ if GEMINI_API_KEY:
 openai_client = None
 if OPENAI_API_KEY:
     try:
-        import openai
+        import openai  # Import openai library
         openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
         print("DEBUG: OpenAI client initialized.")
     except Exception as e:
