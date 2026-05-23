@@ -112,12 +112,6 @@ const PrevalenceMap = () => {
 
   return (
     <div className="app-container">
-      <header className="header">
-        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <MapIcon size={28} />
-        </div>
-      </header>
-
       <main className="main-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <button 
           onClick={() => window.close()} 
