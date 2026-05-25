@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 import { 
   ArrowLeft, 
   Dna, 
@@ -28,7 +29,7 @@ const DiseaseDetailsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`http://localhost:5000/more-details?disease=${encodeURIComponent(diseaseName)}`);
+        const response = await axios.get(`${API_BASE_URL}/more-details?disease=${encodeURIComponent(diseaseName)}`);
         console.log('DiseaseDetailsPage: Dataset data received:', response.data);
         setData(response.data);
       } catch (err) {

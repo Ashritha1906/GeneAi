@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { API_BASE_URL } from './config'
 import { 
   Search, 
   Dna, 
@@ -72,7 +73,7 @@ function App() {
 
     setLoading(true); setError(null); setResults(null)
     try {
-      const response = await axios.post('http://localhost:5000/predict', { symptoms: query, limit: 3 })
+      const response = await axios.post(`${API_BASE_URL}/predict`, { symptoms: query, limit: 3 })
       if (response.data.error || response.data.message) {
         setError(response.data.error || response.data.message)
       } else {

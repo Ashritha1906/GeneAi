@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { API_BASE_URL } from './config';
 import { Bot, X, MessageSquare, Sparkles, HelpCircle, AlertTriangle, Send, Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import './AIAssistant.css';
 
@@ -112,7 +113,7 @@ const AIAssistant = ({ currentDisease }) => {
     console.log("Fetching AI Response for:", userText);
     
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
