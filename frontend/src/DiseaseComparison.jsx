@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 import { 
   ArrowLeft, 
   Layers, 
@@ -32,7 +33,7 @@ const DiseaseComparison = () => {
       setLoading(true);
       try {
         const fetchPromises = selectedDiseases.map(disease => 
-          axios.get(`http://localhost:5000/disease-details?name=${encodeURIComponent(disease)}`)
+          axios.get(`${API_BASE_URL}/disease-details?name=${encodeURIComponent(disease)}`)
         );
         
         const responses = await Promise.all(fetchPromises);

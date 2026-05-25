@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 import {
   Dna, Activity, ShieldCheck, Stethoscope, RefreshCw, FlaskConical,
   MapPin, FileText, UserCheck, ArrowLeft, Loader2, AlertCircle,
@@ -49,7 +50,7 @@ export default function DiseaseBrowser() {
   const chatRef = useRef(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/get-all-diseases')
+    axios.get(`${API_BASE_URL}/get-all-diseases`)
       .then(r => setDiseases(r.data.diseases || []))
       .catch(() => setDiseases([]));
   }, []);
@@ -57,7 +58,7 @@ export default function DiseaseBrowser() {
   const selectDisease = async (name) => {
     setSelected(name); setData(null); setLoading(true); setChatHistory([]);
     try {
-      const r = await axios.get(`http://localhost:5000/disease-full?name=${encodeURIComponent(name)}`);
+      const r = await axios.get(`${API_BASE_URL}/disease-full?name=${encodeURIComponent(name)}`);
       setData(r.data);
     } catch { setData(null); }
     finally { setLoading(false); }
